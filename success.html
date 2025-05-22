@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success - CareCore Marketplace</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #2a4365;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .success-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #38a169;
+            margin-bottom: 1rem;
+        }
+
+        .success-title {
+            font-size: 2rem;
+            color: #2a4365;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .success-message {
+            color: #4a5568;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .order-details {
+            background-color: #f7fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .order-details h3 {
+            color: #2a4365;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .order-details p {
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3182ce;
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+
+        @media (max-width: 768px) {
+            .success-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">CareCore</div>
+        <div class="nav-links">
+            <a href="mkt.html"><i class="fas fa-home"></i> Marketplace</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="success-container">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            
+            <h1 class="success-title">Order Successful!</h1>
+            
+            <p class="success-message">
+                Thank you for your purchase! Your order has been processed successfully and you will receive a confirmation email shortly.
+            </p>
+
+            <div class="order-details">
+                <h3><i class="fas fa-receipt"></i> Order Information</h3>
+                <p><strong>Order Number:</strong> <span id="order-number">Loading...</span></p>
+                <p><strong>Payment Status:</strong> <span style="color: #38a169;">Completed</span></p>
+                <p><strong>Estimated Delivery:</strong> 3-5 business days</p>
+                <p><strong>Email Confirmation:</strong> Sent to your registered email</p>
+            </div>
+
+            <div class="buttons">
+                <a href="mkt.html" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i>
+                    Continue Shopping
+                </a>
+                <a href="#" class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                    Print Receipt
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Get session ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        
+        // Generate a mock order number based on session ID or timestamp
+        const orderNumber = sessionId ? 
+            `CC-${sessionId.substring(0, 8).toUpperCase()}` : 
+            `CC-${Date.now().toString().substring(-8)}`;
+            
+        document.getElementById('order-number').textContent = orderNumber;
+
+        // Clear any existing cart data from localStorage
+        if (typeof(Storage) !== "undefined") {
+            localStorage.removeItem('carecore_cart');
+        }
+    </script>
+</body>
+</html>

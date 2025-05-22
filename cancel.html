@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Cancelled - CareCore Marketplace</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #2a4365;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .cancel-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .cancel-icon {
+            font-size: 4rem;
+            color: #e53e3e;
+            margin-bottom: 1rem;
+        }
+
+        .cancel-title {
+            font-size: 2rem;
+            color: #2a4365;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .cancel-message {
+            color: #4a5568;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background-color: #fef5e7;
+            border-left: 4px solid #ed8936;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #dd6b20;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            color: #744210;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3182ce;
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+
+        .btn-cart {
+            background-color: #38a169;
+            color: white;
+        }
+
+        .btn-cart:hover {
+            background-color: #2f855a;
+        }
+
+        .help-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .help-section h3 {
+            color: #2a4365;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .help-section p {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .cancel-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">CareCore</div>
+        <div class="nav-links">
+            <a href="mkt.html"><i class="fas fa-home"></i> Marketplace</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="cancel-container">
+            <div class="cancel-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            
+            <h1 class="cancel-title">Order Cancelled</h1>
+            
+            <p class="cancel-message">
+                Your order has been cancelled and no payment has been processed. Your items are still saved in your cart if you'd like to try again.
+            </p>
+
+            <div class="info-box">
+                <h3><i class="fas fa-info-circle"></i> What happened?</h3>
+                <p>• You cancelled the payment process</p>
+                <p>• No charges have been made to your payment method</p>
+                <p>• Your cart items are still available</p>
+                <p>• You can retry checkout at any time</p>
+            </div>
+
+            <div class="buttons">
+                <a href="mkt.html" class="btn btn-cart" onclick="showCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    View Cart & Retry
+                </a>
+                <a href="mkt.html" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i>
+                    Continue Shopping
+                </a>
+            </div>
+
+            <div class="help-section">
+                <h3>Need Help?</h3>
+                <p>If you experienced any issues during checkout or have questions about our products, please don't hesitate to contact our customer support team.</p>
+                <a href="#" class="btn btn-secondary">
+                    <i class="fas fa-headset"></i>
+                    Contact Support
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Function to show cart when returning to marketplace
+        function showCart() {
+            // Set a flag to show cart modal when returning to marketplace
+            if (typeof(Storage) !== "undefined") {
+                localStorage.setItem('carecore_show_cart', 'true');
+            }
+        }
+
+        // Auto-redirect to marketplace after 30 seconds
+        setTimeout(() => {
+            const redirectNotice = document.createElement('div');
+            redirectNotice.innerHTML = `
+                <div style="position: fixed; bottom: 20px; right: 20px; background: #4299e1; color: white; padding: 1rem; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <i class="fas fa-info-circle"></i> Redirecting to marketplace in 10 seconds...
+                </div>
+            `;
+            document.body.appendChild(redirectNotice);
+
+            setTimeout(() => {
+                window.location.href = 'mkt.html';
+            }, 10000);
+        }, 30000);
+    </script>
+</body>
+</html>

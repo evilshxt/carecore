@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCore Marketplace</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mkt.css">
+</head>
+<body>
+    <header>
+        <div class="logo">CareCore</div>
+        <nav>
+            <div class="search-bar">
+                <input type="text" placeholder="Search products...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+            <div class="nav-links">
+                <a href="#" id="cart-btn"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="#" id="profile-btn"><i class="fas fa-user"></i> Profile</a>
+                <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <aside class="filters">
+            <h3>Categories</h3>
+            <ul>
+                <li><a href="#" class="filter-link active" data-category="all">All Products</a></li>
+                <li><a href="#" class="filter-link" data-category="medical">Medical</a></li>
+                <li><a href="#" class="filter-link" data-category="wellness">Wellness</a></li>
+                <li><a href="#" class="filter-link" data-category="supplements">Supplements</a></li>
+            </ul>
+        </aside>
+
+        <section class="products">
+            <div class="product-grid" id="product-grid">
+                <!-- Products will be loaded here dynamically -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i> Loading products...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Cart Modal -->
+    <div class="modal" id="cart-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Your Cart</h2>
+            <div class="cart-items" id="cart-items">
+                <!-- Cart items will be loaded here -->
+            </div>
+            <div class="cart-total">
+                <p>Total: $<span id="cart-total">0.00</span></p>
+                <button id="checkout-btn">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>User Profile</h2>
+            <div id="profile-info">
+                <!-- Profile info will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and Stripe JS -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <!-- App JS -->
+    <script src="js/keys.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/mkt.js"></script>
+</body>
+</html>
