@@ -215,8 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!state.lastWhisperTimestamp || message.timestamp > state.lastWhisperTimestamp) {
                         state.lastWhisperTimestamp = message.timestamp;
                     }
-                    
-                    showWhisperNotification(message.username);
                 }
             });
         }
@@ -248,8 +246,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Image handling
         elements.imageUploadButton.addEventListener('click', () => {
-            showError("Image upload is currently unavailable while we're in development mode. Please try again later.");
-            elements.imageUpload.value = '';
+            elements.imageUpload.click();
+        });
+
+        // Handle image selection
+        elements.imageUpload.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            
+            if (files.length > 4) {
+                showError("Maximum 4 images allowed");
+                return;
+            }
+            
+            // Validate file types and sizes
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            for (const file of files) {
+                if (!validTypes.includes(file.type)) {
+                    showError("Only JPEG, PNG, GIF, and WebP images are allowed");
+                    return;
+                }
+                if (file.size > maxSize) {
+                    showError("Each image must be less than 5MB");
+                    return;
+                }
+            }
+            
+            state.selectedImages = files;
+            elements.imageCount.textContent = `${files.length}/4`;
+            
+            // Show image previews
+            elements.imagePreview.classList.remove('hidden');
+            elements.imagePreview.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.createElement('div');
+                    preview.className = 'relative';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-20 object-cover rounded" alt="Preview">
+                        <button class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 text-xs" onclick="removeImage(${index})">×</button>
+                    `;
+                    elements.imagePreview.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
         });
 
         // Mentions and whispers with improved popover handling
@@ -352,41 +395,93 @@ document.addEventListener('DOMContentLoaded', function() {
                 flagMessage(messageId);
             }
         });
+
+        // Emoji picker
+        if (!document.getElementById('emoji-picker-btn')) {
+            const emojiBtn = document.createElement('button');
+            emojiBtn.id = 'emoji-picker-btn';
+            emojiBtn.type = 'button';
+            emojiBtn.className = 'ml-2 text-xl';
+            emojiBtn.innerHTML = '😊';
+            elements.messageInput.parentNode.appendChild(emojiBtn);
+            emojiBtn.addEventListener('click', () => {
+                // Simple emoji picker
+                const emojis = ['😀','😂','😍','😎','😭','😡','👍','🙏','🎉','🔥'];
+                let picker = document.getElementById('emoji-picker-popup');
+                if (picker) picker.remove();
+                picker = document.createElement('div');
+                picker.id = 'emoji-picker-popup';
+                picker.className = 'absolute bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow p-2 z-50';
+                picker.style.top = (emojiBtn.offsetTop + 30) + 'px';
+                picker.style.left = emojiBtn.offsetLeft + 'px';
+                emojis.forEach(e => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'text-2xl m-1';
+                    btn.textContent = e;
+                    btn.onclick = () => {
+                        elements.messageInput.value += e;
+                        updateCharCounter();
+                        picker.remove();
+                    };
+                    picker.appendChild(btn);
+                });
+                document.body.appendChild(picker);
+                document.addEventListener('click', function closePicker(ev) {
+                    if (!picker.contains(ev.target) && ev.target !== emojiBtn) {
+                        picker.remove();
+                        document.removeEventListener('click', closePicker);
+                    }
+                });
+            });
+        }
+
+        // Ctrl+Enter as send shortcut
+        elements.messageInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     }
 
     // 7. Improved popover functions
     function showMentionPopover(isWhisper = false) {
-        // Close first to reset state
         closeMentionPopover();
-        
-        // Position the popover
         const triggerButton = isWhisper ? elements.whisperButton : elements.mentionButton;
         const rect = triggerButton.getBoundingClientRect();
-        
-        // Set position
-        elements.mentionPopover.style.position = 'fixed';
-        elements.mentionPopover.style.left = `${rect.left}px`;
-        elements.mentionPopover.style.top = `${rect.bottom + 5}px`; // 5px below button
-        elements.mentionPopover.style.zIndex = '1000';
-        
-        // Show popover
-        elements.mentionPopover.classList.remove('hidden');
-        elements.mentionPopover.style.display = 'block';
-        
-        // Set mode and focus
+        const popover = elements.mentionPopover;
+        popover.style.position = 'fixed';
+        popover.style.width = '280px';
+        popover.style.zIndex = '1000';
+        // Calculate available space below and above
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const popoverHeight = 300; // max-height in CSS
+        let top;
+        if (spaceBelow > popoverHeight + 20) {
+            // Place below
+            top = rect.bottom + 5;
+        } else if (spaceAbove > popoverHeight + 20) {
+            // Place above
+            top = rect.top - popoverHeight - 5;
+        } else {
+            // Place as best as possible within viewport
+            top = Math.max(10, Math.min(rect.bottom + 5, window.innerHeight - popoverHeight - 10));
+        }
+        popover.style.left = `${Math.max(10, Math.min(rect.left, window.innerWidth - 290))}px`;
+        popover.style.top = `${top}px`;
+        popover.classList.remove('hidden');
+        popover.style.display = 'block';
         elements.mentionSearch.dataset.mode = isWhisper ? 'whisper' : 'mention';
         elements.mentionSearch.value = '';
-        
-        // Focus with delay to prevent immediate close
         setTimeout(() => {
             elements.mentionSearch.focus();
             filterMentionableUsers();
         }, 100);
-        
-        // Add flag to prevent immediate closing
-        elements.mentionPopover.dataset.justOpened = 'true';
+        popover.dataset.justOpened = 'true';
         setTimeout(() => {
-            elements.mentionPopover.dataset.justOpened = 'false';
+            popover.dataset.justOpened = 'false';
         }, 200);
     }
 
@@ -589,6 +684,11 @@ document.addEventListener('DOMContentLoaded', function() {
             messageElement.classList.add('new-message-highlight');
             setTimeout(() => messageElement.classList.remove('new-message-highlight'), 2000);
         }, 300);
+
+        // Ensure auto-scroll to new messages
+        if (window.scrollY < 100) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
     function prependWhisperMessageSmoothly(id, message) {
@@ -606,6 +706,11 @@ document.addEventListener('DOMContentLoaded', function() {
             whisperElement.style.opacity = '1';
             whisperElement.style.transform = 'translateY(0)';
         });
+
+        // Ensure auto-scroll to new messages
+        if (window.scrollY < 100) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
     function appendMessage(id, message) {
@@ -621,105 +726,63 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const messageElement = document.createElement('div');
         messageElement.id = `msg-${id}`;
-        messageElement.className = `message-bubble p-4 rounded-lg shadow-sm mb-4 ${getUserBadgeClass(message.userTag)}`;
+        messageElement.className = `message-bubble bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 ${getUserBadgeClass(message.userTag)}`;
+        messageElement.dataset.messageId = id;
         
-        // Header with username and timestamp
-        const header = document.createElement('div');
-        header.className = 'flex justify-between items-center mb-2';
+        const isWhisper = message.isWhisper;
+        const whisperClass = isWhisper ? 'border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-900/20' : '';
+        messageElement.className += ` ${whisperClass}`;
         
-        const timestamp = message.timestamp.toDate ? message.timestamp.toDate() : new Date(message.timestamp);
-        const formattedTime = formatTimestamp(timestamp);
+        const timeString = formatTimestamp(message.timestamp);
+        const isOwnMessage = message.userId === state.currentUser.uid;
         
-        header.innerHTML = `
-            <div class="flex items-center space-x-2">
-                <span class="font-bold">${message.username || 'Anonymous'}</span>
-                <span class="px-2 py-1 text-xs rounded-full ${getTagBadgeClass(message.userTag)}">
-                    ${message.userTag || 'user'}
-                </span>
-                ${message.isWhisper ? `
-                    <span class="ml-2 text-purple-600 flex items-center">
-                        <i class="fas fa-user-secret mr-1"></i>
-                        Whisper to ${message.whisperToUsername || 'user'}
-                    </span>
-                ` : ''}
+        let messageContent = `
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-gray-800 dark:text-white">${message.username}</span>
+                    ${isWhisper ? '<span class="text-purple-600 dark:text-purple-400 text-sm"><i class="fas fa-user-secret mr-1"></i>Whisper</span>' : ''}
+                    <span class="text-xs ${getTagBadgeClass(message.userTag)} px-2 py-1 rounded-full">${message.userTag}</span>
+                </div>
+                <span class="text-xs text-gray-500">${timeString}</span>
             </div>
-            <time class="text-xs text-gray-500">${formattedTime}</time>
+            <div class="break-words text-gray-700 dark:text-gray-300 mb-2">${highlightMentions(message.text)}</div>
         `;
         
-        // Message content
-        const textElement = document.createElement('div');
-        textElement.className = 'mb-2 break-words';
-        textElement.innerHTML = highlightMentions(message.text || '');
-        
-        // Images if any
-        let imagesContainer = '';
+        // Add images if present
         if (message.images && message.images.length > 0) {
-            const imageGrid = document.createElement('div');
-            imageGrid.className = `image-grid mt-2 mb-3 grid gap-2 ${message.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`;
-            
-            message.images.forEach(img => {
-                const imgWrapper = document.createElement('div');
-                imgWrapper.innerHTML = `
-                    <img src="${img}" alt="Message image" 
-                         class="rounded-lg cursor-pointer hover:opacity-90 w-full object-cover max-h-40" 
-                         onclick="openImageModal('${img}')">
-                `;
-                imageGrid.appendChild(imgWrapper);
+            messageContent += '<div class="image-grid mb-2">';
+            message.images.forEach(image => {
+                if (image.type === 'cloudinary') {
+                    messageContent += `<img src="${image.url}" class="w-full h-32 object-cover rounded cursor-pointer" onclick="openImageModal('${image.url}')" alt="Message image">`;
+                } else if (image.type === 'base64') {
+                    messageContent += `<img src="${image.url}" class="w-full h-32 object-cover rounded cursor-pointer" onclick="openImageModal('${image.url}')" alt="Message image">`;
+                }
             });
-            
-            imagesContainer = imageGrid.outerHTML;
+            messageContent += '</div>';
         }
         
-        // Enhanced reply info
-        let replyInfo = '';
-        if (message.replyTo) {
-            replyInfo = `
-                <div class="reply-info text-sm text-gray-600 bg-gray-100 p-2 rounded mb-2 hover:bg-gray-200 cursor-pointer"
-                     onclick="scrollToMessage('${message.replyTo}')">
-                    <i class="fas fa-reply mr-1"></i> Replying to ${message.replyToUsername || 'a message'}
-                    <span class="ml-1 text-indigo-600">(View original)</span>
+        // Add reply info if present
+        if (message.replyToUsername) {
+            messageContent += `
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                    <i class="fas fa-reply mr-1"></i>Replying to ${message.replyToUsername}
                 </div>
             `;
         }
         
-        // Action buttons
-        const actions = document.createElement('div');
-        actions.className = 'flex space-x-3 text-sm mt-2';
-        
-        // Reply button
-        const replyBtn = document.createElement('button');
-        replyBtn.className = 'text-indigo-600 hover:underline flex items-center reply-btn';
-        replyBtn.dataset.messageId = id;
-        replyBtn.innerHTML = '<i class="fas fa-reply mr-1"></i>Reply';
-        
-        // Flag button
-        const flagBtn = document.createElement('button');
-        flagBtn.className = 'text-red-600 hover:underline flex items-center flag-btn';
-        flagBtn.dataset.messageId = id;
-        flagBtn.innerHTML = '<i class="fas fa-flag mr-1"></i>Flag';
-        
-        actions.appendChild(replyBtn);
-        actions.appendChild(flagBtn);
-        
-        // Delete button (only for own messages)
-        if (message.userId === state.currentUser?.uid) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'text-gray-600 hover:underline flex items-center delete-btn';
-            deleteBtn.dataset.messageId = id;
-            deleteBtn.innerHTML = '<i class="fas fa-trash mr-1"></i>Delete';
-            actions.appendChild(deleteBtn);
-        }
-        
-        // Assemble the message
-        messageElement.innerHTML = `
-            ${header.outerHTML}
-            ${replyInfo}
-            ${textElement.outerHTML}
-            ${message.caption ? `<div class="text-sm text-gray-600 mb-2">${message.caption}</div>` : ''}
-            ${imagesContainer}
-            ${actions.outerHTML}
+        messageContent += `
+            <div class="flex space-x-2 text-sm">
+                <button class="reply-btn text-indigo-600 dark:text-indigo-400 hover:underline">
+                    <i class="fas fa-reply mr-1"></i>Reply
+                </button>
+                ${isOwnMessage ? '<button class="delete-btn text-red-600 dark:text-red-400 hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button>' : ''}
+                <button class="flag-btn text-yellow-600 dark:text-yellow-400 hover:underline">
+                    <i class="fas fa-flag mr-1"></i>Flag
+                </button>
+            </div>
         `;
         
+        messageElement.innerHTML = messageContent;
         return messageElement;
     }
 
@@ -759,6 +822,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const userData = userDoc.data();
             
+            // Upload images if any
+            let imageUrls = [];
+            if (state.selectedImages.length > 0) {
+                console.log("Uploading images...");
+                imageUrls = await uploadImagesToCloudinary(state.selectedImages);
+            }
+            
             // Prepare message
             const messageData = {
                 userId: state.currentUser.uid,
@@ -771,7 +841,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 whisperTo: state.whisperRecipient?.userId || null,
                 whisperToUsername: state.whisperRecipient?.username || null,
                 replyTo: state.replyingToMessage?.id || null,
-                replyToUsername: state.replyingToMessage?.username || null
+                replyToUsername: state.replyingToMessage?.username || null,
+                images: imageUrls // Array of {type: 'cloudinary'|'base64', url: string}
             };
             
             // Add to Firestore
@@ -783,7 +854,11 @@ document.addEventListener('DOMContentLoaded', function() {
             clearSelectedImages();
             cancelReplyToMessage();
             
-            if (state.whisperRecipient) cancelWhisper();
+            // Show whisper feedback
+            if (state.whisperRecipient) {
+                showSuccess(`Whisper sent to ${state.whisperRecipient.username}!`);
+                cancelWhisper();
+            }
             
             // IMMEDIATE POLL after sending
             console.log("Message sent, polling for updates...");
@@ -796,6 +871,65 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.sendButton.disabled = false;
             elements.sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
         }
+    }
+
+    // Alternative: Convert image to base64 for storage in Firestore
+    async function convertImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Cloudinary image upload function with fallback
+    async function uploadImagesToCloudinary(imageFiles) {
+        const uploadPromises = imageFiles.map(async (file) => {
+            // First try Cloudinary
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+                formData.append('cloud_name', cloudinaryConfig.cloudName);
+                
+                console.log('Uploading to Cloudinary:', {
+                    cloudName: cloudinaryConfig.cloudName,
+                    uploadPreset: cloudinaryConfig.uploadPreset,
+                    fileName: file.name,
+                    fileSize: file.size
+                });
+                
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Cloudinary response:', response.status, errorText);
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Upload successful:', data.secure_url);
+                return { type: 'cloudinary', url: data.secure_url };
+            } catch (error) {
+                console.error('Cloudinary upload failed, trying base64 fallback:', error);
+                
+                // Fallback: Convert to base64
+                try {
+                    const base64Data = await convertImageToBase64(file);
+                    console.log('Base64 conversion successful');
+                    return { type: 'base64', url: base64Data };
+                } catch (base64Error) {
+                    console.error('Base64 conversion failed:', base64Error);
+                    throw new Error(`Failed to process image: ${error.message}`);
+                }
+            }
+        });
+        
+        return Promise.all(uploadPromises);
     }
 
     // 11. Reply and mention functions
@@ -860,7 +994,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .slice(0, 20);
         
         if (filteredUsers.length === 0) {
-            elements.mentionList.innerHTML = '<div class="p-2 text-center text-gray-500">No users found</div>';
+            elements.mentionList.innerHTML = '<div class="p-2 text-center text-red-500">No users found. Please check your connection or ask an admin to add users.</div>';
             return;
         }
         
@@ -1118,26 +1252,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 13. Global functions for HTML event handlers
-    window.openImageModal = function(url) {
+    window.openImageModal = function(imageUrl) {
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
         modal.innerHTML = `
-            <div class="relative">
-                <img src="${url}" alt="Full size image" class="max-h-90vh max-w-90vw">
-                <button class="absolute top-2 right-2 bg-white rounded-full p-2 text-black" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="max-w-4xl max-h-full p-4">
+                <img src="${imageUrl}" class="max-w-full max-h-full object-contain" alt="Full size image">
+                <button class="absolute top-4 right-4 text-white text-2xl" onclick="this.parentElement.parentElement.remove()">×</button>
             </div>
         `;
-        document.body.appendChild(modal);
-        modal.addEventListener('click', function(e) {
+        modal.onclick = (e) => {
             if (e.target === modal) modal.remove();
-        });
+        };
+        document.body.appendChild(modal);
     };
 
-    window.removeSelectedImage = function(index) {
+    // Remove image function
+    window.removeImage = function(index) {
         state.selectedImages.splice(index, 1);
-        updateImagePreview();
+        elements.imageCount.textContent = `${state.selectedImages.length}/4`;
+        
+        if (state.selectedImages.length === 0) {
+            elements.imagePreview.classList.add('hidden');
+            elements.imageUpload.value = '';
+        } else {
+            // Recreate previews
+            elements.imagePreview.innerHTML = '';
+            state.selectedImages.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.createElement('div');
+                    preview.className = 'relative';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-20 object-cover rounded" alt="Preview">
+                        <button class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 text-xs" onclick="removeImage(${idx})">×</button>
+                    `;
+                    elements.imagePreview.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     };
 
     window.scrollToMessage = function(messageId) {
@@ -1151,4 +1305,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 14. Start the forum
     initForum();
+
+    // Add dark/light mode toggle in header if not present
+    // Fix dark/light mode toggle: persist in localStorage and apply on page load
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark');
+            localStorage.setItem('carecore-theme', 'dark');
+        } else {
+            document.body.classList.remove('dark');
+            localStorage.setItem('carecore-theme', 'light');
+        }
+        // Optionally update toggle icon
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) {
+            btn.innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+    }
+    // On page load, apply saved theme
+    (function() {
+        const saved = localStorage.getItem('carecore-theme');
+        if (saved === 'dark') {
+            document.body.classList.add('dark');
+        } else if (saved === 'light') {
+            document.body.classList.remove('dark');
+        }
+    })();
+    // Update the theme toggle button to use applyTheme
+    if (!document.getElementById('theme-toggle-btn')) {
+        const header = document.querySelector('header .container');
+        const btn = document.createElement('button');
+        btn.id = 'theme-toggle-btn';
+        btn.className = 'ml-4 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400';
+        btn.innerHTML = '<i class="fas fa-moon"></i>';
+        btn.title = 'Toggle Dark/Light Mode';
+        btn.onclick = () => {
+            const isDark = document.body.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
+        };
+        header.appendChild(btn);
+    } else {
+        document.getElementById('theme-toggle-btn').onclick = () => {
+            const isDark = document.body.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
+        };
+    }
 });

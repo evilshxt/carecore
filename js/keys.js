@@ -5,7 +5,8 @@ const firebaseConfig = {
     storageBucket: "carecore-2a14b.firebasestorage.app",
     messagingSenderId: "390584515199",
     appId: "1:390584515199:web:1a4f1b9458f82a3d05dd4a",
-    measurementId: "G-V4994KZNHQ"
+    measurementId: "G-V4994KZNHQ",
+    databaseURL: "https://carecore-2a14b-default-rtdb.firebaseio.com/"
 };
 
 // Voiceflow configuration

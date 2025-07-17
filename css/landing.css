@@ -231,10 +231,33 @@ footer form textarea:focus {
 /* Feature Icons */
 .feature-icon i {
     transition: transform 0.3s ease;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: 1.5rem !important;
+    color: var(--primary) !important;
 }
 
 .feature-card:hover .feature-icon i {
     transform: scale(1.2);
+}
+
+/* Ensure feature icons are always visible */
+.feature-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 4rem !important;
+    height: 4rem !important;
+    background-color: rgba(79, 70, 229, 0.1) !important;
+    border-radius: 50% !important;
+    margin: 0 auto 1rem auto !important;
+}
+
+.feature-icon i::before {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Button Styles */

@@ -79,15 +79,18 @@ function getUserName() {
 
 function addWelcomeMessage() {
     const chatContainer = document.getElementById('chatContainer');
-    if (chatContainer.children.length <= 1) {
+    if (chatContainer.children.length === 0) {
         const username = getUserName();
-        let welcomeMessage = "Hello! I'm your CareCoreAI Health Assistant. How can I help you today?";
+        let welcomeMessage = "Hello! I'm your CareCoreAI Health Assistant. I'm here to provide general health information and support. Please note that I'm not a substitute for professional medical advice. How can I help you today?";
         
         if (username) {
-            welcomeMessage = `Hello ${username}! I'm your CareCoreAI Health Assistant. How can I help you today?`;
+            welcomeMessage = `Hello ${username}! I'm your CareCoreAI Health Assistant. I'm here to provide general health information and support. Please note that I'm not a substitute for professional medical advice. How can I help you today?`;
         }
         
         addMessageToUI(welcomeMessage, false);
+        
+        // Ensure chat scrolls to bottom after welcome message
+        setTimeout(scrollToBottom, 100);
     }
 }
 
@@ -197,44 +200,188 @@ function addMessageToUI(content, isUser) {
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     messageDiv.className = `chat-message ${isUser ? 'user-message' : 'ai-message'}`;
-    messageDiv.innerHTML = `
-        <div class="message-content ${isUser ? 'bg-accent text-primary' : 'bg-accent bg-opacity-10'} p-4 rounded-lg border-l-4 ${isUser ? 'border-transparent' : 'border-accent'} shadow-sm">
-            ${!isUser ? `
-            <div class="flex items-center mb-2">
-                <div class="assistant-avatar mr-2">
-                    <i class="fas fa-robot text-accent"></i>
-                </div>
-                <span class="font-medium text-accent">CareCoreAI</span>
-            </div>
-            ` : ''}
-            <p>${content}</p>
-            <div class="message-timestamp">${timeString}</div>
-        </div>
-    `;
     
-    chatContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    if (isUser) {
+        // User messages appear instantly
+        messageDiv.innerHTML = `
+            <div class="message-content bg-accent text-primary p-4 rounded-lg border-l-4 border-transparent shadow-sm">
+                <div class="message-text">${content}</div>
+                <div class="message-timestamp text-xs opacity-75 mt-2">${timeString}</div>
+            </div>
+        `;
+        chatContainer.appendChild(messageDiv);
+        scrollToBottom();
+    } else {
+        // AI messages get typing animation
+        const formattedContent = formatMessageContent(content);
+        messageDiv.innerHTML = `
+            <div class="message-content bg-accent bg-opacity-10 p-4 rounded-lg border-l-4 border-accent shadow-sm">
+                <div class="flex items-center mb-2">
+                    <div class="assistant-avatar mr-2">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="font-medium text-accent">CareCoreAI</span>
+                </div>
+                <div class="message-text typing-container"></div>
+                <div class="message-timestamp text-xs opacity-75 mt-2">${timeString}</div>
+            </div>
+        `;
+        chatContainer.appendChild(messageDiv);
+        
+        // Start typing animation
+        typeMessage(messageDiv.querySelector('.typing-container'), formattedContent);
+    }
 }
 
+// Function to format message content with markdown-like syntax
+function formatMessageContent(content) {
+    if (!content) return '';
+    
+    let formatted = content
+        // Convert **text** to bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Convert *text* to italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Convert numbered lists (1. text)
+        .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="list-item numbered"><span class="list-number">$1.</span><span class="list-text">$2</span></div>')
+        // Convert bullet points (- text or • text)
+        .replace(/^[-•]\s+(.+)$/gm, '<div class="list-item bulleted"><span class="list-bullet">•</span><span class="list-text">$1</span></div>')
+        // Convert line breaks to proper HTML
+        .replace(/\n/g, '<br>');
+    
+    // Wrap consecutive list items in a list container
+    formatted = formatted.replace(
+        /(<div class="list-item[^>]*>.*?<\/div>)+/g,
+        (match) => `<div class="message-list">${match}</div>`
+    );
+    
+    return formatted;
+}
+
+// Function to animate typing with HTML support
+function typeMessage(container, content) {
+    // Split content into chunks that preserve HTML tags
+    const chunks = splitContentIntoTypableChunks(content);
+    let currentIndex = 0;
+    
+    // Adjust typing speed based on content length
+    const baseSpeed = 8; // milliseconds per chunk
+    const speedMultiplier = Math.min(1, 100 / chunks.length); // Faster for longer messages
+    const typingSpeed = Math.max(3, baseSpeed * speedMultiplier); // Minimum 3ms, maximum 8ms
+    
+    function typeNextChunk() {
+        if (currentIndex < chunks.length) {
+            container.innerHTML += chunks[currentIndex];
+            currentIndex++;
+            
+            // Scroll to bottom after each chunk
+            scrollToBottom();
+            
+            // Continue typing
+            setTimeout(typeNextChunk, typingSpeed);
+        } else {
+            // Animation complete, ensure final scroll
+            setTimeout(scrollToBottom, 100);
+        }
+    }
+    
+    // Start typing animation
+    typeNextChunk();
+}
+
+// Function to split content into typable chunks while preserving HTML
+function splitContentIntoTypableChunks(content) {
+    const chunks = [];
+    let currentChunk = '';
+    let inTag = false;
+    let tagBuffer = '';
+    
+    for (let i = 0; i < content.length; i++) {
+        const char = content[i];
+        
+        if (char === '<') {
+            // Start of HTML tag
+            if (currentChunk) {
+                chunks.push(currentChunk);
+                currentChunk = '';
+            }
+            inTag = true;
+            tagBuffer = '<';
+        } else if (char === '>') {
+            // End of HTML tag
+            tagBuffer += '>';
+            chunks.push(tagBuffer);
+            tagBuffer = '';
+            inTag = false;
+        } else if (inTag) {
+            // Inside HTML tag
+            tagBuffer += char;
+        } else {
+            // Regular text character
+            currentChunk += char;
+            
+            // Split on spaces for natural word boundaries
+            if (char === ' ' && currentChunk.length > 0) {
+                chunks.push(currentChunk);
+                currentChunk = '';
+            }
+        }
+    }
+    
+    // Add any remaining content
+    if (tagBuffer) {
+        chunks.push(tagBuffer);
+    }
+    if (currentChunk) {
+        chunks.push(currentChunk);
+    }
+    
+    return chunks;
+}
+
+// Improved scroll function
+function scrollToBottom() {
+    const chatContainer = document.getElementById('chatContainer');
+    
+    // Use requestAnimationFrame for smooth scrolling
+    requestAnimationFrame(() => {
+        try {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        } catch (error) {
+            // Fallback for browsers that don't support smooth scrolling
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
+}
+
+// Enhanced typing indicator with auto-scroll
 function showTypingIndicator() {
     const chatContainer = document.getElementById('chatContainer');
     const template = document.getElementById('typingIndicator');
     const clone = template.content.cloneNode(true);
     
     chatContainer.appendChild(clone);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    scrollToBottom();
 }
 
 function hideTypingIndicator() {
     const typingIndicator = document.querySelector('.typing-indicator');
     if (typingIndicator) {
         typingIndicator.remove();
+        // Scroll to bottom after removing typing indicator
+        scrollToBottom();
     }
 }
 
+// Add scroll to bottom when textarea is resized
 function resetTextareaHeight(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = '50px'; // Reset to default height
+    // Scroll to bottom when input area changes
+    setTimeout(scrollToBottom, 100);
 }
 
 function initUI() {
@@ -250,16 +397,15 @@ function initUI() {
     const clearChatButton = document.getElementById('clearChat');
     clearChatButton.addEventListener('click', () => {
         const chatContainer = document.getElementById('chatContainer');
-        // Keep only the first welcome message
-        while (chatContainer.children.length > 1) {
-            chatContainer.removeChild(chatContainer.lastChild);
-        }
+        // Clear all messages and add welcome message again
+        chatContainer.innerHTML = '';
+        addWelcomeMessage();
     });
 
     // Export chat button
     const exportChatButton = document.getElementById('exportChat');
     exportChatButton.addEventListener('click', () => {
-        const chatMessages = Array.from(document.querySelectorAll('.message-content p'))
+        const chatMessages = Array.from(document.querySelectorAll('.message-text'))
             .map(p => p.textContent)
             .join('\n\n');
         
@@ -277,14 +423,29 @@ function initUI() {
     const emojiPicker = document.getElementById('emojiPicker');
     const userInput = document.getElementById('userInput');
     
+    console.log('Setting up emoji button:', emojiButton);
+    console.log('Setting up emoji picker:', emojiPicker);
+    
     emojiButton.addEventListener('click', () => {
+        console.log('Emoji button clicked');
         emojiPicker.classList.toggle('hidden');
+        // Scroll to bottom when emoji picker is toggled
+        setTimeout(scrollToBottom, 100);
+    });
+    
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.classList.add('hidden');
+        }
     });
     
     document.querySelectorAll('.emoji-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            console.log('Emoji clicked:', btn.textContent);
             userInput.value += btn.textContent;
             userInput.focus();
+            emojiPicker.classList.add('hidden');
         });
     });
 
@@ -292,6 +453,8 @@ function initUI() {
     userInput.addEventListener('input', () => {
         userInput.style.height = 'auto';
         userInput.style.height = `${Math.min(userInput.scrollHeight, 150)}px`;
+        // Scroll to bottom when input changes
+        setTimeout(scrollToBottom, 50);
     });
 
     // Theme toggle functionality
@@ -319,23 +482,36 @@ function initUI() {
     const voiceButton = document.getElementById('voiceButton');
     const voiceStatus = document.getElementById('voiceStatus');
 
-    if ('webkitSpeechRecognition' in window) {
-        const recognition = new webkitSpeechRecognition();
+    console.log('Setting up voice button:', voiceButton);
+    console.log('Speech recognition available:', 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = false;
         recognition.interimResults = false;
         recognition.lang = 'en-US';
 
         voiceButton.addEventListener('click', () => {
+            console.log('Voice button clicked, current state:', voiceButton.classList.contains('listening'));
             if (voiceButton.classList.contains('listening')) {
                 recognition.stop();
                 voiceButton.classList.remove('listening');
                 voiceStatus.classList.add('hidden');
             } else {
-                recognition.start();
-                voiceButton.classList.add('listening');
-                voiceStatus.classList.remove('hidden');
+                try {
+                    recognition.start();
+                    voiceButton.classList.add('listening');
+                    voiceStatus.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Speech recognition start error:', error);
+                    addMessageToUI("Voice input failed to start. Please try again.", false);
+                }
             }
         });
+
+        recognition.onstart = () => {
+            console.log('Speech recognition started');
+        };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
@@ -349,10 +525,23 @@ function initUI() {
             console.error('Speech recognition error', event.error);
             voiceButton.classList.remove('listening');
             voiceStatus.classList.add('hidden');
-            addMessageToUI("Voice input failed. Please try typing instead.", false);
+            
+            if (event.error === 'not-allowed') {
+                addMessageToUI("Microphone access denied. Please allow microphone access and try again.", false);
+            } else {
+                addMessageToUI("Voice input failed. Please try typing instead.", false);
+            }
+        };
+
+        recognition.onend = () => {
+            voiceButton.classList.remove('listening');
+            voiceStatus.classList.add('hidden');
         };
     } else {
         voiceButton.disabled = true;
         voiceButton.title = 'Speech recognition not supported in your browser';
+        voiceButton.addEventListener('click', () => {
+            alert('Speech recognition is not supported in your browser. Please use text input instead.');
+        });
     }
 }

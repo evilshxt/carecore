@@ -232,16 +232,29 @@ html[data-theme="nature"] {
   text-align: right;
 }
 
+/* Enhanced assistant avatar - visible and prominent */
 .assistant-avatar {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: var(--accent);
-  opacity: 0.2;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: var(--primary);
+  font-size: 1.2rem;
+  border: 3px solid var(--accent-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin-right: 12px;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.assistant-avatar i {
+  color: var(--primary) !important;
+  font-weight: bold;
+  font-size: 1.1rem;
 }
 
 .user-avatar {
@@ -255,14 +268,22 @@ html[data-theme="nature"] {
   color: var(--text);
 }
 
-/* Voice Button */
+/* Enhanced Voice Button */
 #voiceButton {
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 #voiceButton.listening {
-  background-color: #ff3b3b;
+  background: linear-gradient(135deg, #ff3b3b, #ff6b6b);
+  transform: scale(1.1);
   animation: listening-pulse 1.5s infinite;
+  box-shadow: 0 0 20px rgba(255, 59, 59, 0.5);
+}
+
+#voiceButton.listening i {
+  animation: mic-bounce 0.8s infinite;
 }
 
 @keyframes listening-pulse {
@@ -270,27 +291,59 @@ html[data-theme="nature"] {
     box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 59, 59, 0);
+    box-shadow: 0 0 0 15px rgba(255, 59, 59, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 59, 59, 0);
   }
 }
 
-/* Mic Animation */
+@keyframes mic-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Enhanced Voice Status */
+#voiceStatus {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: var(--primary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: status-fade-in 0.3s ease;
+}
+
+@keyframes status-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Mic Animation */
 .mic-animation {
   display: flex;
   align-items: flex-end;
-  height: 16px;
+  height: 20px;
+  margin-right: 8px;
 }
 
 .mic-animation span {
   display: inline-block;
-  width: 3px;
-  height: 5px;
+  width: 4px;
+  height: 6px;
   margin: 0 1px;
-  background-color: var(--accent);
-  border-radius: 1px;
+  background-color: var(--primary);
+  border-radius: 2px;
   animation: mic-wave 1.2s infinite ease-in-out;
 }
 
@@ -300,7 +353,7 @@ html[data-theme="nature"] {
 
 .mic-animation span:nth-child(2) {
   animation-delay: 0.2s;
-  height: 8px;
+  height: 10px;
 }
 
 .mic-animation span:nth-child(3) {
@@ -309,10 +362,10 @@ html[data-theme="nature"] {
 
 @keyframes mic-wave {
   0%, 100% {
-    height: 5px;
+    height: 6px;
   }
   50% {
-    height: 12px;
+    height: 16px;
   }
 }
 
@@ -435,19 +488,202 @@ html[data-theme="nature"] {
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 }
 
+/* Logo Styling */
 .logo-wrapper {
-    width: 36px;
-    height: 36px;
+    position: relative;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--accent-dark);
 }
 
 .logo-wrapper .fa-heartbeat {
     position: relative;
     z-index: 1;
+    font-size: 1.8rem;
+    color: var(--primary);
+    animation: heartbeat 2s ease-in-out infinite;
 }
 
-.logo-wrapper .fa-robot {
-    z-index: 2;
-    background-color: var(--primary);
-    border-radius: 50%;
-    padding: 2px;
+
+
+@keyframes heartbeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
 }
+
+/* Message Formatting Styles */
+.message-text {
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.message-text strong {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.message-text em {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.message-list {
+    margin: 8px 0;
+}
+
+.list-item {
+    display: flex;
+    align-items: flex-start;
+    margin: 4px 0;
+    padding: 2px 0;
+}
+
+.list-item.numbered {
+    counter-increment: list-counter;
+}
+
+.list-number {
+    font-weight: 600;
+    color: var(--accent);
+    margin-right: 8px;
+    min-width: 20px;
+    display: inline-block;
+}
+
+.list-bullet {
+    color: var(--accent);
+    margin-right: 8px;
+    font-weight: bold;
+    min-width: 8px;
+    display: inline-block;
+}
+
+.list-text {
+    flex: 1;
+    line-height: 1.5;
+}
+
+/* Improved message spacing */
+.chat-message {
+    max-width: 85%;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.ai-message .message-content {
+    background-color: var(--secondary);
+    border-radius: 18px 18px 18px 0;
+    border-left: 4px solid var(--accent);
+}
+
+.user-message .message-content {
+    background-color: var(--accent);
+    color: var(--primary);
+    border-radius: 18px 18px 0 18px;
+    border-left: 4px solid transparent;
+}
+
+/* Chat Container Improvements */
+#chatContainer {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--tertiary);
+    scroll-behavior: smooth;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    min-height: 400px;
+}
+
+/* Ensure messages are properly spaced and visible */
+.chat-message {
+    max-width: 85%;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+    word-wrap: break-word;
+}
+
+.chat-message:last-child {
+    margin-bottom: 0;
+}
+
+/* Message content improvements */
+.message-content {
+    position: relative;
+    overflow-wrap: break-word;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.message-content:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure proper spacing for long messages */
+.message-text {
+    line-height: 1.6;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Typing animation styles */
+.typing-container {
+    min-height: 1.2em;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.typing-container:empty::after {
+    content: '▋';
+    color: var(--accent);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Typing animation for AI messages */
+.ai-message .message-content {
+    background-color: var(--secondary);
+    border-radius: 18px 18px 18px 0;
+    border-left: 4px solid var(--accent);
+    transition: all 0.2s ease;
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+    .chat-message {
+        max-width: 95%;
+        margin-bottom: 1rem;
+    }
+    
+    .assistant-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+        margin-right: 8px;
+    }
+    
+    #chatContainer {
+        padding: 12px;
+    }
+}
+
+/* Ensure the avatar container is properly positioned */
+.ai-message .message-content .flex.items-center {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+

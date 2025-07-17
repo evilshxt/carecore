@@ -18,7 +18,6 @@
             <div class="flex items-center space-x-3">
                 <div class="logo-wrapper relative">
                     <i class="fas fa-heartbeat text-3xl text-accent"></i>
-                    <i class="fas fa-robot text-lg text-accent absolute -right-1 -bottom-1"></i>
                 </div>
                 <h1 class="text-2xl md:text-3xl font-bold tracking-tight">CareCore<span class="text-accent">AI</span> Health</h1>
             </div>
@@ -88,22 +87,12 @@
         </div>
 
         <div id="chatContainer" class="flex-1 overflow-y-auto mb-4 space-y-4 p-4 rounded-lg bg-secondary border border-tertiary shadow-inner">
-            <div class="chat-message ai-message">
-                <div class="message-content bg-accent bg-opacity-10 p-4 rounded-lg border-l-4 border-accent shadow-sm">
-                    <div class="flex items-center mb-2">
-                        <div class="assistant-avatar mr-2">
-                            <i class="fas fa-robot text-accent"></i>
-                        </div>
-                        <span class="font-medium text-accent">CareCoreAI</span>
-                    </div>
-                    <p>Welcome to CareCore AI and thanks for using carecore, for any concerns or enquiries feel free to contact us.</p>
-                </div>
-            </div>
+            <!-- Messages will be added dynamically via JavaScript -->
         </div>
 
         <div class="input-area bg-secondary p-4 rounded-lg border border-tertiary shadow-md">
             <div class="flex items-center">
-                <button id="voiceButton" class="flex-shrink-0 mr-3 p-3 rounded-full bg-accent text-primary hover:bg-accent-dark transition-colors shadow-md">
+                <button id="voiceButton" class="flex-shrink-0 mr-3 p-3 rounded-full bg-accent text-primary hover:bg-accent-dark transition-colors shadow-md" title="Click to speak - converts your voice to text">
                     <i class="fas fa-microphone"></i>
                 </button>
                 <div class="flex-1 relative">
@@ -119,34 +108,136 @@
                 </div>
             </div>
             <div id="voiceStatus" class="text-sm text-accent mt-2 hidden">
-                <div class="flex items-center">
+                <div class="flex items-center justify-center">
                     <div class="mic-animation mr-2">
                         <span></span>
                         <span></span>
                         <span></span>
                     </div>
-                    Listening...
+                    <span class="font-medium">Listening... Speak now!</span>
                 </div>
             </div>
             <div id="emojiPicker" class="mt-2 p-2 bg-tertiary rounded-lg border border-tertiary hidden">
                 <div class="grid grid-cols-8 gap-2">
-                    <!-- Common emojis -->
+                    <!-- Health & Medical -->
+                    <button class="emoji-btn">🏥</button>
+                    <button class="emoji-btn">🩺</button>
+                    <button class="emoji-btn">💊</button>
+                    <button class="emoji-btn">💉</button>
+                    <button class="emoji-btn">🩹</button>
+                    <button class="emoji-btn">🩻</button>
+                    <button class="emoji-btn">🧬</button>
+                    <button class="emoji-btn">🔬</button>
+                    
+                    <!-- Symptoms -->
+                    <button class="emoji-btn">🤒</button>
+                    <button class="emoji-btn">🤕</button>
+                    <button class="emoji-btn">🤧</button>
+                    <button class="emoji-btn">😷</button>
+                    <button class="emoji-btn">🤢</button>
+                    <button class="emoji-btn">🤮</button>
+                    <button class="emoji-btn">😵</button>
+                    <button class="emoji-btn">😴</button>
+                    
+                    <!-- Emotions -->
                     <button class="emoji-btn">😊</button>
                     <button class="emoji-btn">😢</button>
                     <button class="emoji-btn">😂</button>
                     <button class="emoji-btn">🤔</button>
-                    <button class="emoji-btn">😷</button>
-                    <button class="emoji-btn">🤒</button>
-                    <button class="emoji-btn">🤕</button>
-                    <button class="emoji-btn">🤧</button>
+                    <button class="emoji-btn">😌</button>
+                    <button class="emoji-btn">😤</button>
+                    <button class="emoji-btn">😰</button>
+                    <button class="emoji-btn">😅</button>
+                    
+                    <!-- Actions -->
                     <button class="emoji-btn">❤️</button>
                     <button class="emoji-btn">👍</button>
                     <button class="emoji-btn">👎</button>
                     <button class="emoji-btn">🙏</button>
-                    <button class="emoji-btn">💊</button>
-                    <button class="emoji-btn">🏥</button>
-                    <button class="emoji-btn">🩺</button>
-                    <button class="emoji-btn">🌡️</button>
+                    <button class="emoji-btn">🤝</button>
+                    <button class="emoji-btn">👋</button>
+                    <button class="emoji-btn">💪</button>
+                    <button class="emoji-btn">🧘</button>
+                    
+                    <!-- Body Parts -->
+                    <button class="emoji-btn">👁️</button>
+                    <button class="emoji-btn">👂</button>
+                    <button class="emoji-btn">🦻</button>
+                    <button class="emoji-btn">🫀</button>
+                    <button class="emoji-btn">🫁</button>
+                    <button class="emoji-btn">🧠</button>
+                    <button class="emoji-btn">🦴</button>
+                    <button class="emoji-btn">🦷</button>
+                    
+                    <!-- Wellness -->
+                    <button class="emoji-btn">💧</button>
+                    <button class="emoji-btn">🍎</button>
+                    <button class="emoji-btn">🥗</button>
+                    <button class="emoji-btn">🏃</button>
+                    <button class="emoji-btn">🧘‍♀️</button>
+                    <button class="emoji-btn">😴</button>
+                    <button class="emoji-btn">☀️</button>
+                    <button class="emoji-btn">🌙</button>
+                    
+                    <!-- Food & Nutrition -->
+                    <button class="emoji-btn">🥑</button>
+                    <button class="emoji-btn">🥦</button>
+                    <button class="emoji-btn">🥕</button>
+                    <button class="emoji-btn">🍌</button>
+                    <button class="emoji-btn">🥛</button>
+                    <button class="emoji-btn">🥚</button>
+                    <button class="emoji-btn">🐟</button>
+                    <button class="emoji-btn">🥜</button>
+                    
+                    <!-- Exercise & Fitness -->
+                    <button class="emoji-btn">🏋️</button>
+                    <button class="emoji-btn">🚴</button>
+                    <button class="emoji-btn">🏊</button>
+                    <button class="emoji-btn">⚽</button>
+                    <button class="emoji-btn">🏀</button>
+                    <button class="emoji-btn">🎾</button>
+                    <button class="emoji-btn">🏓</button>
+                    <button class="emoji-btn">🎯</button>
+                    
+                    <!-- Natural Remedies -->
+                    <button class="emoji-btn">🌿</button>
+                    <button class="emoji-btn">🍃</button>
+                    <button class="emoji-btn">🌱</button>
+                    <button class="emoji-btn">🌸</button>
+                    <button class="emoji-btn">🌺</button>
+                    <button class="emoji-btn">🌻</button>
+                    <button class="emoji-btn">🌼</button>
+                    <button class="emoji-btn">🌷</button>
+                    
+                    <!-- Mental Health -->
+                    <button class="emoji-btn">🧠</button>
+                    <button class="emoji-btn">💭</button>
+                    <button class="emoji-btn">💡</button>
+                    <button class="emoji-btn">🎭</button>
+                    <button class="emoji-btn">🎨</button>
+                    <button class="emoji-btn">🎵</button>
+                    <button class="emoji-btn">📚</button>
+                    <button class="emoji-btn">✍️</button>
+                    
+                    <!-- Emergency Services -->
+                    <button class="emoji-btn">🚑</button>
+                    <button class="emoji-btn">🚨</button>
+                    <button class="emoji-btn">🆘</button>
+                    <button class="emoji-btn">📞</button>
+                    <button class="emoji-btn">🔔</button>
+                    <button class="emoji-btn">⚠️</button>
+                    <button class="emoji-btn">🚪</button>
+                    <button class="emoji-btn">🏃‍♂️</button>
+                    
+                    <!-- Recovery & Healing -->
+                    <button class="emoji-btn">🛏️</button>
+                    <button class="emoji-btn">🛁</button>
+                    <button class="emoji-btn">🧴</button>
+                    <button class="emoji-btn">🫖</button>
+                    <button class="emoji-btn">🍵</button>
+                    <button class="emoji-btn">🕯️</button>
+                    <button class="emoji-btn">🕊️</button>
+                    <button class="emoji-btn">🌈</button>
                 </div>
             </div>
         </div>
@@ -170,7 +261,7 @@
             <div class="message-content bg-accent bg-opacity-10 p-4 rounded-lg border-l-4 border-accent shadow-sm">
                 <div class="flex items-center mb-2">
                     <div class="assistant-avatar mr-2">
-                        <i class="fas fa-robot text-accent"></i>
+                        <i class="fas fa-robot"></i>
                     </div>
                     <span class="font-medium text-accent">CareCoreAI</span>
                 </div>

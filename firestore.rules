@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User document rules
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /{document=**} {
+        allow read: if request.auth != null || 
+                    (request.auth == null && 
+                     (document == 'username' || 
+                      document == 'userType'));
+      }
+    }
+    
+    // Community messages rules
+    match /community_messages/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      
+      allow delete: if 
+          request.auth != null && (
+          request.auth.uid == resource.data.userId ||
+          isAdmin(request.auth.uid)
+          );
+      
+      // Updated update rule to handle flagging
+      allow update: if 
+          request.auth != null && (
+          // Original owner or admin can update anything
+          request.auth.uid == resource.data.userId ||
+          isAdmin(request.auth.uid) ||
+          // Any authenticated user can flag a message
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged']) &&
+           request.resource.data.flagged == true)
+          );
+    }
+    
+    // Eye test collection rules
+    match /eye/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+    }
+    
+    // New Ear test collection rules
+    match /ear/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+    }
+    
+    // Products collection rules
+    match /products/{productId} {
+      allow read: if true; // Anyone can read products
+      allow create, update, delete: if isAdmin(request.auth.uid);
+    }
+    
+    function isAdmin(uid) {
+      return uid != null && exists(/databases/$(database)/documents/users/$(uid)) && 
+             get(/databases/$(database)/documents/users/$(uid)).data.userType == 'admin';
+    }
+  }
+}

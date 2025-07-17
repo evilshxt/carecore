@@ -31,37 +31,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const features = [
         {
             title: 'Health Professionals',
-            icon: 'fa-user-md', // Valid FA icon
+            icon: 'fa-user-md',
+            fallbackIcon: '👨‍⚕️',
             description: 'Connect with certified health professionals for personalized advice and consultations.',
             link: 'professionals.html'
         },
         {
             title: 'AI Chat Support',
-            icon: 'fa-robot', // Valid FA icon
+            icon: 'fa-robot',
+            fallbackIcon: '🤖',
             description: 'Get instant health information from our AI-powered chatbot available 24/7.',
             link: 'chat.html'
         },
         {
             title: 'Community Forum',
-            icon: 'fa-users', // Valid FA icon
+            icon: 'fa-users',
+            fallbackIcon: '👥',
             description: 'Join discussions, share experiences, and get support from our health community.',
             link: 'forum.html'
         },
         {
             title: 'Health Marketplace',
-            icon: 'fa-store', // Valid FA icon
+            icon: 'fa-store',
+            fallbackIcon: '🏪',
             description: 'Discover and purchase health and wellness products from trusted vendors.',
             link: 'mkt.html'
         },
         {
             title: 'Eye Health Tests',
-            icon: 'fa-eye', // Valid FA icon
+            icon: 'fa-eye',
+            fallbackIcon: '👁️',
             description: 'Take simple eye tests to monitor your vision health and get recommendations.',
             link: 'eye.html'
         },
         {
             title: 'Hearing Tests',
-            icon: 'fa-ear-deaf', // Note: This might need to be 'fa-deaf' or 'fa-assistive-listening-systems'
+            icon: 'fa-deaf',
+            fallbackIcon: '🦻',
             description: 'Evaluate your hearing with our easy-to-use audio tests and track results over time.',
             link: 'ear.html'
         }
@@ -134,18 +140,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize feature cards
     function initFeatureCards() {
+        console.log('Initializing feature cards...');
         featuresGrid.innerHTML = '';
         
         features.forEach(feature => {
+            console.log(`Creating card for: ${feature.title} with icon: ${feature.icon}`);
             const card = document.createElement('a');
             card.href = feature.link;
             card.className = 'feature-card bg-card-bg rounded-xl shadow-md p-6 hover:shadow-lg transition-all';
             card.innerHTML = `
                 <div class="text-center">
-                    <div class="feature-icon w-16 h-16 bg-primary bg-opacity-10 text-primary rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                        <span class="fa-layers fa-fw">
-                            <i class="fas ${feature.icon}"></i>
-                        </span>
+                    <div class="feature-icon w-16 h-16 bg-primary bg-opacity-10 text-primary rounded-full flex items-center justify-center mx-auto mb-4 text-2xl" style="display: flex !important; align-items: center !important; justify-content: center !important; background-color: rgba(79, 70, 229, 0.1) !important; border-radius: 50% !important; margin: 0 auto 1rem auto !important;">
+                        <i class="fas ${feature.icon}" style="display: inline-block !important; visibility: visible !important; opacity: 1 !important; font-size: 1.5rem !important; color: #4F46E5 !important;"></i>
+                        <span class="fallback-icon" style="display: none; font-size: 1.5rem;">${feature.fallbackIcon}</span>
                     </div>
                     <h3 class="text-xl font-bold mb-2">${feature.title}</h3>
                     <p class="text-gray-600">${feature.description}</p>
@@ -154,10 +161,75 @@ document.addEventListener('DOMContentLoaded', () => {
             featuresGrid.appendChild(card);
         });
         
-        // This helps Font Awesome detect new icons
-        if (window.FontAwesome) {
-            window.FontAwesome.dom.i2svg();
-        }
+        console.log('Feature cards created, attempting to load icons...');
+        
+        // Multiple attempts to ensure Font Awesome icons load
+        const loadIcons = () => {
+            console.log('Attempting to load Font Awesome icons...');
+            if (window.FontAwesome) {
+                console.log('FontAwesome found, calling i2svg...');
+                window.FontAwesome.dom.i2svg();
+            } else {
+                console.log('FontAwesome not found');
+            }
+            // Also try the older method
+            if (window.FontAwesome && window.FontAwesome.dom && window.FontAwesome.dom.watch) {
+                console.log('Calling FontAwesome watch...');
+                window.FontAwesome.dom.watch();
+            }
+        };
+        
+        // Try immediately
+        loadIcons();
+        
+        // Try after a short delay
+        setTimeout(loadIcons, 100);
+        
+        // Try after a longer delay
+        setTimeout(loadIcons, 500);
+        
+        // Try after Font Awesome is fully loaded
+        setTimeout(loadIcons, 1000);
+        
+        // Check if Font Awesome icons are working after 2 seconds
+        setTimeout(() => {
+            console.log('Checking if Font Awesome icons are visible...');
+            const featureIcons = document.querySelectorAll('.feature-icon i');
+            let iconsVisible = false;
+            
+            featureIcons.forEach(icon => {
+                // Check if the icon has actual content or is just an empty element
+                const computedStyle = window.getComputedStyle(icon, '::before');
+                const content = computedStyle.content;
+                console.log('Icon content:', content);
+                
+                if (content && content !== 'none' && content !== 'normal') {
+                    iconsVisible = true;
+                }
+            });
+            
+            if (!iconsVisible) {
+                console.log('Font Awesome icons not visible, showing fallback emojis...');
+                const fallbackIcons = document.querySelectorAll('.fallback-icon');
+                fallbackIcons.forEach(fallback => {
+                    fallback.style.display = 'block';
+                });
+                const faIcons = document.querySelectorAll('.feature-icon i');
+                faIcons.forEach(icon => {
+                    icon.style.display = 'none';
+                });
+            } else {
+                console.log('Font Awesome icons are working!');
+                // Force show the icons with inline styles
+                featureIcons.forEach(icon => {
+                    icon.style.display = 'inline-block';
+                    icon.style.visibility = 'visible';
+                    icon.style.opacity = '1';
+                    icon.style.fontSize = '1.5rem';
+                    icon.style.color = 'inherit';
+                });
+            }
+        }, 2000);
     }
     
     // Update loadUserData to ensure proper initialization
