@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Elite Coders - Advanced Loader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+        }
+        
+        .loader-container {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #0f1c2e, #050505);
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .title-container {
+            position: relative;
+            margin-bottom: 4rem;
+            perspective: 800px;
+        }
+        
+        .title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.7);
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.8rem;
+                letter-spacing: 0.1em;
+            }
+        }
+        
+        .title-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+            overflow: hidden;
+        }
+        
+        .cybernetic-loader {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-top: 2rem;
+        }
+        
+        .circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 170, 0.2);
+        }
+        
+        .circle-inner {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 170, 0.3);
+            top: 10%;
+            left: 10%;
+        }
+        
+        .spinner-segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #00ffa8;
+            transform-origin: center;
+        }
+        
+        .spinner-segment-inner {
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-bottom-color: #00a1ff;
+            top: 20%;
+            left: 20%;
+            transform-origin: center;
+        }
+        
+        .progress-bar {
+            position: relative;
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 3rem;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+        
+        .progress {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, transparent, #00ffa8, #00a1ff, transparent);
+        }
+        
+        .percentage {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-family: 'Space Mono', monospace;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .loading-text {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 2.5rem;
+            letter-spacing: 0.2em;
+        }
+        
+        .code-snippets {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .code-line {
+            position: absolute;
+            color: rgba(0, 255, 170, 0.2);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        .particles canvas {
+            position: absolute;
+        }
+        
+        .tech-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .tech-icon {
+            font-size: 1.5rem;
+            opacity: 0.3;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .tech-icon.active {
+            opacity: 1;
+            transform: scale(1.2);
+            color: #00ffa8;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container" id="loaderContainer">
+        <div class="code-snippets" id="codeSnippets"></div>
+        <div class="particles" id="particles"></div>
+        
+        <div class="title-container">
+            <div class="title">THE ELITE CODERS</div>
+            <div class="title-effect" id="titleEffect"></div>
+            <div class="matrix-bg" id="matrixCanvas"></div>
+        </div>
+        
+        <div class="cybernetic-loader">
+            <div class="circle"></div>
+            <div class="circle-inner"></div>
+            <div class="spinner-segment" id="spinnerOuter"></div>
+            <div class="spinner-segment-inner" id="spinnerInner"></div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="loading-text" id="loadingText">INITIALIZING ELITE SYSTEMS</div>
+        
+        <div class="tech-icons">
+            <i class="fab fa-react tech-icon"></i>
+            <i class="fab fa-js-square tech-icon"></i>
+            <i class="fab fa-python tech-icon"></i>
+            <i class="fab fa-node-js tech-icon"></i>
+            <i class="fab fa-firebase tech-icon"></i>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Effect
+        function setupMatrix() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const matrixContainer = document.getElementById('matrixCanvas');
+            
+            matrixContainer.appendChild(canvas);
+            
+            canvas.width = matrixContainer.offsetWidth;
+            canvas.height = matrixContainer.offsetHeight;
+            
+            const fontSize = 14;
+            const columns = Math.floor(canvas.width / fontSize);
+            
+            const drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+            }
+            
+            const matrix = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+            
+            function drawMatrix() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = "#00ffa8";
+                ctx.font = fontSize + "px monospace";
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrix[Math.floor(Math.random() * matrix.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    
+                    drops[i]++;
+                }
+            }
+            
+            return setInterval(drawMatrix, 50);
+        }
+        
+        // Code Snippets
+        function createCodeSnippets() {
+            const container = document.getElementById('codeSnippets');
+            const snippets = [
+                "function initializeSystem() { return new Promise((resolve) => { setTimeout(resolve, 1000); }); }",
+                "const eliteCoders = coders.filter(coder => coder.skills.length > 10 && coder.experience > 5);",
+                "useEffect(() => { if (isEliteCoder) { dispatch(setEliteStatus(true)); } }, [profile]);",
+                "async function loadModules() { const modules = await import('./elite-modules'); return modules; }",
+                "class EliteAlgorithm extends BaseAlgorithm { constructor() { super(); this.complexity = 'O(log n)'; } }",
+                "const security = new SecurityLayer({ encryption: 'AES-256', authorization: 'OAuth2' });",
+                "export const createEliteComponent = (config) => { return defineComponent({ ...config, elite: true }); }",
+                "router.get('/api/elite/:id', authMiddleware, eliteController.getProfile);",
+                "const optimizePerformance = (code) => { return new Proxy(code, performanceHandler); };",
+                "firebase.initializeApp(firebaseConfig); const db = firebase.firestore();"
+            ];
+            
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'code-line';
+                line.style.top = Math.random() * 100 + 'vh';
+                line.style.left = Math.random() * 100 + 'vw';
+                line.style.opacity = Math.random() * 0.5 + 0.1;
+                line.textContent = snippets[Math.floor(Math.random() * snippets.length)];
+                container.appendChild(line);
+                
+                gsap.to(line, {
+                    left: '-50%',
+                    duration: Math.random() * 20 + 15,
+                    ease: "linear",
+                    repeat: -1,
+                    delay: Math.random() * 2
+                });
+            }
+        }
+        
+        // Particles Effect
+        function setupParticles() {
+            const container = document.getElementById('particles');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+            
+            camera.position.z = 5;
+            
+            const particles = new THREE.Group();
+            scene.add(particles);
+            
+            // Create particles
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const sizes = [];
+            
+            for (let i = 0; i < 100; i++) {
+                vertices.push(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+                sizes.push(Math.random() * 0.05 + 0.01);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0x00ffa8,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.7,
+                sizeAttenuation: true
+            });
+            
+            const points = new THREE.Points(geometry, material);
+            particles.add(points);
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particles.rotation.x += 0.001;
+                particles.rotation.y += 0.002;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        // Infinite Progress Bar Animation
+        function animateInfiniteProgress() {
+            const progress = document.getElementById('progress');
+            
+            gsap.to(progress, {
+                left: "100%",
+                duration: 2,
+                repeat: -1,
+                ease: "power1.inOut",
+                repeatDelay: 0
+            });
+            
+            // Loading text animation
+            const loadingText = document.getElementById('loadingText');
+            const loadingPhrases = [
+                "INITIALIZING ELITE SYSTEMS",
+                "COMPILING CODE FRAGMENTS",
+                "OPTIMIZING ALGORITHMS",
+                "SECURING CONNECTIONS",
+                "DEPLOYING COMPONENTS"
+            ];
+            
+            let phraseIndex = 0;
+            
+            setInterval(() => {
+                loadingText.textContent = loadingPhrases[phraseIndex];
+                phraseIndex = (phraseIndex + 1) % loadingPhrases.length;
+            }, 1000);
+        }
+        
+        // Cybernetic Loader Animation
+        function animateCyberneticLoader() {
+            gsap.to("#spinnerOuter", {
+                rotation: 360,
+                duration: 3,
+                repeat: -1,
+                ease: "linear"
+            });
+            
+            gsap.to("#spinnerInner", {
+                rotation: -360,
+                duration: 2,
+                repeat: -1,
+                ease: "linear"
+            });
+        }
+        
+        // Title Effects
+        function animateTitle() {
+            const titleEffect = document.getElementById('titleEffect');
+            
+            // Create digital noise effect
+            for (let i = 0; i < 10; i++) {
+                const glitchLine = document.createElement('div');
+                glitchLine.style.position = 'absolute';
+                glitchLine.style.height = '2px';
+                glitchLine.style.width = '100%';
+                glitchLine.style.background = 'rgba(0, 255, 170, 0.7)';
+                glitchLine.style.top = Math.random() * 100 + '%';
+                glitchLine.style.opacity = '0';
+                
+                titleEffect.appendChild(glitchLine);
+                
+                // Random glitch animation
+                setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        glitchLine.style.opacity = '1';
+                        
+                        setTimeout(() => {
+                            glitchLine.style.opacity = '0';
+                        }, 50 + Math.random() * 100);
+                    }
+                }, 500 + Math.random() * 2000);
+            }
+            
+            // Random shift effect
+            setInterval(() => {
+                if (Math.random() > 0.8) {
+                    gsap.to(".title", {
+                        x: () => Math.random() * 4 - 2,
+                        skewX: () => Math.random() * 4 - 2,
+                        duration: 0.1,
+                        onComplete: () => {
+                            gsap.to(".title", {
+                                x: 0,
+                                skewX: 0,
+                                duration: 0.1
+                            });
+                        }
+                    });
+                }
+            }, 2000);
+        }
+        
+        // Tech Icons Animation
+        function animateTechIcons() {
+            const icons = document.querySelectorAll('.tech-icon');
+            let currentIndex = 0;
+            
+            function activateIcon() {
+                icons.forEach(icon => icon.classList.remove('active'));
+                icons[currentIndex].classList.add('active');
+                
+                currentIndex = (currentIndex + 1) % icons.length;
+                setTimeout(activateIcon, 1000);
+            }
+            
+            activateIcon();
+        }
+        
+         // Hide loader when content is fully loaded and redirect to landing.html
+        function hideLoaderWhenReady() {
+            const loaderContainer = document.getElementById('loaderContainer');
+            let domLoaded = false;
+            let minTimeElapsed = false;
+
+            // Set minimum time flag after 5 seconds
+            setTimeout(() => {
+                minTimeElapsed = true;
+                if (domLoaded) {
+                    hideLoaderAndRedirect();
+                }
+            }, 5000);
+
+            // Check when DOM is loaded
+            window.addEventListener('load', () => {
+                domLoaded = true;
+                if (minTimeElapsed) {
+                    hideLoaderAndRedirect();
+                }
+            });
+
+            function hideLoaderAndRedirect() {
+                loaderContainer.style.opacity = '0';
+                setTimeout(() => {
+                    loaderContainer.style.display = 'none';
+                    window.location.href = 'landing.html';
+                }, 500);
+            }
+        }
+
+        // Initialize all animations
+        document.addEventListener('DOMContentLoaded', () => {
+            setupMatrix();
+            createCodeSnippets();
+            setupParticles();
+            animateInfiniteProgress();
+            animateCyberneticLoader();
+            animateTitle();
+            animateTechIcons();
+            hideLoaderWhenReady();
+        });
+    </script>
+</body>
+</html>

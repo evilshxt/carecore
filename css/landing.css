@@ -1,0 +1,335 @@
+/* Base Styles */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #4F46E5;
+    --primary-dark: #4338CA;
+    --secondary: #10B981;
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+    --card-bg: #ffffff;
+}
+
+/* Theme Definitions */
+.theme-default {
+    --primary: #4F46E5;
+    --primary-dark: #4338CA;
+    --secondary: #10B981;
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+    --card-bg: #ffffff;
+}
+
+.theme-coolors {
+    --primary: #315659;
+    --primary-dark: #253031;
+    --secondary: #88BB92;
+    --bg-color: #C6E0FF;
+    --text-color: #253031;
+    --card-bg: #C1A5A9;
+}
+
+.theme-nature {
+    --primary: #2E7D32;
+    --primary-dark: #1B5E20;
+    --secondary: #689F38;
+    --bg-color: #F1F8E9;
+    --text-color: #1B5E20;
+    --card-bg: #DCEDC8;
+}
+
+.theme-sunset {
+    --primary: #FF7043;
+    --primary-dark: #E64A19;
+    --secondary: #FFA726;
+    --bg-color: #FFF3E0;
+    --text-color: #BF360C;
+    --card-bg: #FFE0B2;
+}
+
+.theme-ocean {
+    --primary: #0288D1;
+    --primary-dark: #01579B;
+    --secondary: #26C6DA;
+    --bg-color: #E1F5FE;
+    --text-color: #01579B;
+    --card-bg: #B3E5FC;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Navigation */
+.navbar {
+    transition: all 0.3s ease;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* Hero Section */
+.hero {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+
+/* Feature Cards */
+.feature-card {
+    transition: all 0.3s ease;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.feature-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    transition: all 0.3s ease;
+}
+
+/* Buttons */
+.cta-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+}
+
+.cta-btn:hover::after {
+    left: 100%;
+}
+
+/* Theme Modal */
+.theme-option {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-option::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.theme-option:hover::after {
+    opacity: 1;
+}
+
+/* Profile Modal */
+#profile-image {
+    transition: all 0.3s ease;
+}
+
+#profile-image:hover {
+    opacity: 0.8;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hero {
+        min-height: 70vh;
+        padding-top: 100px;
+        padding-bottom: 60px;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Footer Styles */
+footer a {
+    transition: all 0.3s ease;
+}
+
+footer form input,
+footer form textarea {
+    transition: all 0.3s ease;
+}
+
+footer form input:focus,
+footer form textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Map Container */
+.map-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+}
+
+.map-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.5rem;
+}
+
+/* Profile Icon Styles */
+#profile-icon-container {
+    transition: all 0.3s ease;
+}
+
+#profile-icon-container:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Username Edit Button */
+#edit-username-btn {
+    transition: all 0.2s ease;
+    align-self: flex-end;
+}
+
+#edit-username-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Feature Icons */
+.feature-icon i {
+    transition: transform 0.3s ease;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: 1.5rem !important;
+    color: var(--primary) !important;
+}
+
+.feature-card:hover .feature-icon i {
+    transform: scale(1.2);
+}
+
+/* Ensure feature icons are always visible */
+.feature-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 4rem !important;
+    height: 4rem !important;
+    background-color: rgba(79, 70, 229, 0.1) !important;
+    border-radius: 50% !important;
+    margin: 0 auto 1rem auto !important;
+}
+
+.feature-icon i::before {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Button Styles */
+.cta-btn, .secondary-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+}
+
+.cta-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+}
+
+.cta-btn:hover::after {
+    left: 100%;
+}
+
+.secondary-btn {
+    transition: all 0.3s ease;
+}
+
+/* Ensure buttons are visible */
+#typed-greeting + p + div {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure hero buttons are always visible after animation */
+.hero .cta-btn,
+.hero .secondary-btn {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Smooth scrolling for the whole page */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Section transition base styles */
+section {
+    transition: all 0.5s ease-out;
+}
+
+/* Hero section specific adjustments */
+.hero h1, .hero p {
+    will-change: transform, opacity;
+}
+
+/* Feature cards transition refinement */
+.feature-card {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+}
+
+/* About section specific styles */
+#about {
+    will-change: transform, opacity;
+}
+
+/* Footer transition adjustment */
+footer {
+    will-change: transform, opacity;
+}

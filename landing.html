@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCore | Health & Wellness Platform</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary)',
+                        'primary-dark': 'var(--primary-dark)',
+                        secondary: 'var(--secondary)',
+                        'bg-color': 'var(--bg-color)',
+                        'text-color': 'var(--text-color)',
+                        'card-bg': 'var(--card-bg)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body class="font-poppins bg-bg-color text-text-color min-h-screen">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden z-0">
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 opacity-50"></div>
+        <div id="floating-icons" class="absolute inset-0 overflow-hidden">
+            <!-- Icons will be added via JS -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10">
+        <!-- Navigation -->
+        <nav class="navbar bg-white bg-opacity-80 backdrop-blur-md shadow-sm fixed w-full top-0 left-0 z-50">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="logo flex items-center">
+                    <i class="fas fa-heartbeat text-primary text-2xl mr-2"></i>
+                    <span class="font-bold text-xl text-primary">CareCore</span>
+                </div>
+                
+                <div class="hidden md:flex space-x-6">
+                    <a href="#" class="nav-link hover:text-primary transition-colors">Home</a>
+                    <a href="#features" class="nav-link hover:text-primary transition-colors">Features</a>
+                    <a href="chat.html" class="nav-link hover:text-primary transition-colors">Health Chat</a>
+                    <a href="forum.html" class="nav-link hover:text-primary transition-colors">Community</a>
+                    <a href="#" class="nav-link hover:text-primary transition-colors">Marketplace</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-palette text-lg"></i>
+                    </button>
+                    <button id="profile-btn" class="relative">
+                        <i class="fas fa-user-circle text-2xl text-primary"></i>
+                    </button>
+                    <button id="mobile-menu-btn" class="md:hidden p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path id="menu-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden bg-white py-2 px-4 shadow-lg">
+                <a href="#" class="block py-2 nav-link hover:text-primary transition-colors">Home</a>
+                <a href="#features" class="block py-2 nav-link hover:text-primary transition-colors">Features</a>
+                <a href="chat.html" class="block py-2 nav-link hover:text-primary transition-colors">Health Chat</a>
+                <a href="forum.html" class="block py-2 nav-link hover:text-primary transition-colors">Community</a>
+                <a href="#" class="block py-2 nav-link hover:text-primary transition-colors">Marketplace</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero pt-32 pb-20 px-4">
+            <div class="container mx-auto text-center">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                    <span id="typed-greeting" class="text-primary"></span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    Your comprehensive health and wellness platform connecting you with professionals, 
+                    AI support, and a caring community.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#features" class="cta-btn px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all transform hover:scale-105">
+                        Get Started
+                    </a>
+                    <a href="#about" class="secondary-btn px-8 py-3 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all transform hover:scale-105">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Section -->
+        <section id="about" class="py-20 px-4 bg-white bg-opacity-90">
+            <div class="container mx-auto max-w-4xl">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">About CareCore</h2>
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <p class="text-lg mb-4">
+                            CareCore is a comprehensive health and wellness platform connecting you with professionals, 
+                            AI support, and a caring community.
+                        </p>
+                        <p class="text-lg mb-6">
+                            Our mission is to make healthcare accessible, personalized, and empowering for everyone.
+                        </p>
+                        <a href="#features" class="secondary-btn px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all">
+                            Explore Features
+                        </a>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-6 rounded-xl">
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-heartbeat text-primary text-2xl mt-1 mr-4"></i>
+                                <div>
+                                    <h3 class="font-bold text-lg">Health First</h3>
+                                    <p>Prioritizing your wellbeing with evidence-based solutions</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-primary text-2xl mt-1 mr-4"></i>
+                                <div>
+                                    <h3 class="font-bold text-lg">Community Support</h3>
+                                    <p>Connect with others on similar health journeys</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 px-4">
+            <div class="container mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Our Features</h2>
+                <p class="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+                    Discover how CareCore can support your health journey with these powerful features
+                </p>
+                
+                <div class="features-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Feature cards will be added dynamically via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Modal -->
+        <div id="profile-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Your Profile</h3>
+                    <button id="close-profile-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="profile-info" class="space-y-4">
+                    <!-- Profile Icon -->
+                    <div class="text-center mb-4">
+                        <div id="profile-icon-container" class="w-20 h-20 rounded-full bg-primary bg-opacity-10 text-primary flex items-center justify-center mx-auto mb-2 text-4xl">
+                            <i id="profile-icon" class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Username Section with Edit Button -->
+                    <div class="flex items-center">
+                        <div class="flex-grow">
+                            <label class="block text-sm font-medium mb-1">Username</label>
+                            <div id="profile-username" class="w-full p-2 border rounded bg-gray-100"></div>
+                        </div>
+                        <button id="edit-username-btn" class="ml-2 p-2 text-primary hover:text-primary-dark">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Email Section -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <div id="profile-email" class="w-full p-2 border rounded bg-gray-100"></div>
+                    </div>
+                    
+                    <!-- User Type Section -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">User Type</label>
+                        <div id="profile-user-type" class="w-full p-2 border rounded bg-gray-100"></div>
+                    </div>
+                    
+                    <!-- Doctor Verification Section -->
+                    <div id="doctor-verification-section" class="hidden p-4 bg-blue-50 rounded-lg mb-4">
+                        <h4 class="font-bold mb-2">Doctor Verification</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">License Number</label>
+                                <div id="doctor-license" class="w-full p-2 border rounded bg-gray-100"></div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Specialty</label>
+                                <div id="doctor-specialty" class="w-full p-2 border rounded bg-gray-100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end pt-4">
+                        <button type="button" id="logout-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Username Edit Modal -->
+        <div id="username-edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Edit Username</h3>
+                    <button id="close-username-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">New Username</label>
+                    <input type="text" id="new-username" class="w-full p-2 border rounded focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div id="username-error" class="text-red-500 mb-4 hidden"></div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-username-change" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="save-username" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme Selector Modal -->
+        <div id="theme-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Choose Your Theme</h3>
+                    <button id="close-theme-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <button data-theme="default" class="theme-option h-16 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium">
+                        Default
+                    </button>
+                    <button data-theme="coolors" class="theme-option h-16 rounded-lg bg-gradient-to-br from-blue-900 to-green-600 flex items-center justify-center text-white font-medium">
+                        Coolors
+                    </button>
+                    <button data-theme="nature" class="theme-option h-16 rounded-lg bg-gradient-to-br from-green-600 to-teal-400 flex items-center justify-center text-white font-medium">
+                        Nature
+                    </button>
+                    <button data-theme="sunset" class="theme-option h-16 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-white font-medium">
+                        Sunset
+                    </button>
+                    <button data-theme="ocean" class="theme-option h-16 rounded-lg bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center text-white font-medium">
+                        Ocean
+                    </button>
+                    <button data-theme="custom" class="theme-option h-16 rounded-lg bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white font-medium">
+                        Custom
+                    </button>
+                </div>
+                
+                <div id="custom-theme-picker" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">Primary Color</label>
+                        <input type="color" id="custom-primary" class="w-full h-10">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">Secondary Color</label>
+                        <input type="color" id="custom-secondary" class="w-full h-10">
+                    </div>
+                    <button id="apply-custom-theme" class="w-full py-2 bg-primary text-white rounded hover:bg-primary-dark">
+                        Apply Custom Theme
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-900 text-white pt-12 pb-6 px-4">
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-primary">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="hover:text-primary transition-colors">Home</a></li>
+                        <li><a href="#features" class="hover:text-primary transition-colors">Features</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Health Chat</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Community</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Marketplace</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-primary">Contact Us</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2 text-primary"></i>
+                            UMaT, Tarkwa, Ghana
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone-alt mr-2 text-primary"></i>
+                            +233 548 697 052
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-primary"></i>
+                            brownnestro0@gmail.com
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Google Map -->
+                <div class="md:col-span-2">
+                    <h3 class="text-xl font-bold mb-4 text-primary">Our Location</h3>
+                    <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-lg">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3969.226324912739!2d-1.997677924686964!3d5.301602394721027!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdbd3a8c4f4a8a5%3A0x8d1c3c6e5e5e5e5e!2sUniversity%20of%20Mines%20and%20Technology%20(UMaT)!5e0!3m2!1sen!2sgh!4v1620000000000!5m2!1sen!2sgh" 
+                            width="100%" 
+                            height="250" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy"
+                            class="rounded-lg"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4 text-primary text-center">Send Us a Message</h3>
+                <form 
+                    action="https://formsubmit.co/brownnestro0@gmail.com" 
+                    method="POST"
+                    class="max-w-2xl mx-auto"
+                >
+                    <input type="hidden" name="_subject" value="New message from CareCore">
+                    <input type="hidden" name="_captcha" value="false">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="name" class="block mb-1">Name</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                required
+                                class="w-full px-4 py-2 bg-gray-700 rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                        </div>
+                        <div>
+                            <label for="email" class="block mb-1">Email</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                required
+                                class="w-full px-4 py-2 bg-gray-700 rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="message" class="block mb-1">Message</label>
+                        <textarea 
+                            id="message" 
+                            name="message" 
+                            rows="4"
+                            required
+                            class="w-full px-4 py-2 bg-gray-700 rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+                        ></textarea>
+                    </div>
+                    <button 
+                        type="submit" 
+                        class="px-6 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors w-full md:w-auto"
+                    >
+                        Send Message
+                    </button>
+                </form>
+            </div>
+
+            <!-- Credits -->
+            <div class="text-center text-gray-400 pt-4 border-t border-gray-700">
+                <p>
+                    &copy; 2025 CareCore Health Platform. All rights reserved.<br>
+                    Crafted with ❤️ by The Elite Coders led by Wednesday &middot; A Smartfix 2025 Initiative <br>
+                    Elite Wednesday &middot; Juju &middot; WilBurnaGmr10
+                </p>
+                <div class="flex justify-center space-x-4 mt-2">
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="js/keys.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/landing.js"></script>
+</body>
+</html>

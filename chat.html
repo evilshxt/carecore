@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="health">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCoreAI Health | Virtual Healthcare Assistant</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Get personalized health advice and support from CareCoreAI, your virtual healthcare assistant.">
+</head>
+<body class="bg-primary text-primary transition-colors duration-300 min-h-screen flex flex-col">
+    <header class="border-b border-tertiary py-4 px-4 md:px-8 sticky top-0 z-10 bg-primary backdrop-filter backdrop-blur-lg bg-opacity-95">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="logo-wrapper relative">
+                    <i class="fas fa-heartbeat text-3xl text-accent"></i>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">CareCore<span class="text-accent">AI</span> Health</h1>
+            </div>
+            <nav class="flex items-center space-x-6">
+                <a href="landing.html" class="nav-link hidden md:inline-block hover:text-accent transition-colors">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+                <div class="relative group">
+                    <button id="themeToggle" class="flex items-center space-x-2 hover:text-accent transition-colors">
+                        <i class="fas fa-palette"></i>
+                        <span class="hidden md:inline-block">Theme</span>
+                        <i class="fas fa-chevron-down text-xs ml-1"></i>
+                    </button>
+                    <div id="themeDropdown" class="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-secondary border border-tertiary hidden z-20">
+                        <div class="py-1">
+                            <button data-theme="health" class="theme-option w-full text-left px-4 py-2 hover:bg-tertiary flex items-center">
+                                <span class="color-swatch bg-health-accent mr-2"></span>Health
+                            </button>
+                            <button data-theme="purple" class="theme-option w-full text-left px-4 py-2 hover:bg-tertiary flex items-center">
+                                <span class="color-swatch bg-purple-accent mr-2"></span>Purple
+                            </button>
+                            <button data-theme="light" class="theme-option w-full text-left px-4 py-2 hover:bg-tertiary flex items-center">
+                                <span class="color-swatch bg-light-accent mr-2"></span>Light
+                            </button>
+                            <button data-theme="nature" class="theme-option w-full text-left px-4 py-2 hover:bg-tertiary flex items-center">
+                                <span class="color-swatch bg-nature-accent mr-2"></span>Nature
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button id="mobileMenuButton" class="md:hidden flex items-center">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <div id="mobileMenu" class="md:hidden bg-secondary py-4 px-6 hidden">
+        <nav class="flex flex-col space-y-4">
+            <a href="landing.html" class="nav-link hover:text-accent transition-colors">
+                <i class="fas fa-home mr-2"></i>Home
+            </a>
+            <a href="#" class="nav-link hover:text-accent transition-colors">
+                <i class="fas fa-info-circle mr-2"></i>About
+            </a>
+        </nav>
+    </div>
+
+    <main class="flex-1 container mx-auto px-4 py-6 flex flex-col h-[calc(100vh-80px)]">
+        <div class="chat-header mb-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-comments text-accent mr-2"></i>
+                    Health Assistant Chat
+                </h2>
+                <div class="flex items-center space-x-3">
+                    <button id="clearChat" class="text-sm py-1 px-3 rounded-full bg-tertiary hover:bg-tertiary-dark transition-colors flex items-center">
+                        <i class="fas fa-trash-alt mr-1"></i>
+                        <span class="hidden md:inline">Clear Chat</span>
+                    </button>
+                    <button id="exportChat" class="text-sm py-1 px-3 rounded-full bg-tertiary hover:bg-tertiary-dark transition-colors flex items-center">
+                        <i class="fas fa-download mr-1"></i>
+                        <span class="hidden md:inline">Export</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatContainer" class="flex-1 overflow-y-auto mb-4 space-y-4 p-4 rounded-lg bg-secondary border border-tertiary shadow-inner">
+            <!-- Messages will be added dynamically via JavaScript -->
+        </div>
+
+        <div class="input-area bg-secondary p-4 rounded-lg border border-tertiary shadow-md">
+            <div class="flex items-center">
+                <button id="voiceButton" class="flex-shrink-0 mr-3 p-3 rounded-full bg-accent text-primary hover:bg-accent-dark transition-colors shadow-md" title="Click to speak - converts your voice to text">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea id="userInput" rows="1" class="w-full p-3 pr-16 rounded-lg bg-tertiary text-primary resize-none border border-tertiary focus:border-accent focus:outline-none transition-colors shadow-inner" placeholder="Type your health question..."></textarea>
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                        <button id="emojiButton" class="text-accent hover:text-accent-dark transition-colors">
+                            <i class="far fa-smile"></i>
+                        </button>
+                        <button id="sendButton" class="text-accent hover:text-accent-dark transition-colors">
+                            <i class="fas fa-paper-plane text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="voiceStatus" class="text-sm text-accent mt-2 hidden">
+                <div class="flex items-center justify-center">
+                    <div class="mic-animation mr-2">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span class="font-medium">Listening... Speak now!</span>
+                </div>
+            </div>
+            <div id="emojiPicker" class="mt-2 p-2 bg-tertiary rounded-lg border border-tertiary hidden">
+                <div class="grid grid-cols-8 gap-2">
+                    <!-- Health & Medical -->
+                    <button class="emoji-btn">🏥</button>
+                    <button class="emoji-btn">🩺</button>
+                    <button class="emoji-btn">💊</button>
+                    <button class="emoji-btn">💉</button>
+                    <button class="emoji-btn">🩹</button>
+                    <button class="emoji-btn">🩻</button>
+                    <button class="emoji-btn">🧬</button>
+                    <button class="emoji-btn">🔬</button>
+                    
+                    <!-- Symptoms -->
+                    <button class="emoji-btn">🤒</button>
+                    <button class="emoji-btn">🤕</button>
+                    <button class="emoji-btn">🤧</button>
+                    <button class="emoji-btn">😷</button>
+                    <button class="emoji-btn">🤢</button>
+                    <button class="emoji-btn">🤮</button>
+                    <button class="emoji-btn">😵</button>
+                    <button class="emoji-btn">😴</button>
+                    
+                    <!-- Emotions -->
+                    <button class="emoji-btn">😊</button>
+                    <button class="emoji-btn">😢</button>
+                    <button class="emoji-btn">😂</button>
+                    <button class="emoji-btn">🤔</button>
+                    <button class="emoji-btn">😌</button>
+                    <button class="emoji-btn">😤</button>
+                    <button class="emoji-btn">😰</button>
+                    <button class="emoji-btn">😅</button>
+                    
+                    <!-- Actions -->
+                    <button class="emoji-btn">❤️</button>
+                    <button class="emoji-btn">👍</button>
+                    <button class="emoji-btn">👎</button>
+                    <button class="emoji-btn">🙏</button>
+                    <button class="emoji-btn">🤝</button>
+                    <button class="emoji-btn">👋</button>
+                    <button class="emoji-btn">💪</button>
+                    <button class="emoji-btn">🧘</button>
+                    
+                    <!-- Body Parts -->
+                    <button class="emoji-btn">👁️</button>
+                    <button class="emoji-btn">👂</button>
+                    <button class="emoji-btn">🦻</button>
+                    <button class="emoji-btn">🫀</button>
+                    <button class="emoji-btn">🫁</button>
+                    <button class="emoji-btn">🧠</button>
+                    <button class="emoji-btn">🦴</button>
+                    <button class="emoji-btn">🦷</button>
+                    
+                    <!-- Wellness -->
+                    <button class="emoji-btn">💧</button>
+                    <button class="emoji-btn">🍎</button>
+                    <button class="emoji-btn">🥗</button>
+                    <button class="emoji-btn">🏃</button>
+                    <button class="emoji-btn">🧘‍♀️</button>
+                    <button class="emoji-btn">😴</button>
+                    <button class="emoji-btn">☀️</button>
+                    <button class="emoji-btn">🌙</button>
+                    
+                    <!-- Food & Nutrition -->
+                    <button class="emoji-btn">🥑</button>
+                    <button class="emoji-btn">🥦</button>
+                    <button class="emoji-btn">🥕</button>
+                    <button class="emoji-btn">🍌</button>
+                    <button class="emoji-btn">🥛</button>
+                    <button class="emoji-btn">🥚</button>
+                    <button class="emoji-btn">🐟</button>
+                    <button class="emoji-btn">🥜</button>
+                    
+                    <!-- Exercise & Fitness -->
+                    <button class="emoji-btn">🏋️</button>
+                    <button class="emoji-btn">🚴</button>
+                    <button class="emoji-btn">🏊</button>
+                    <button class="emoji-btn">⚽</button>
+                    <button class="emoji-btn">🏀</button>
+                    <button class="emoji-btn">🎾</button>
+                    <button class="emoji-btn">🏓</button>
+                    <button class="emoji-btn">🎯</button>
+                    
+                    <!-- Natural Remedies -->
+                    <button class="emoji-btn">🌿</button>
+                    <button class="emoji-btn">🍃</button>
+                    <button class="emoji-btn">🌱</button>
+                    <button class="emoji-btn">🌸</button>
+                    <button class="emoji-btn">🌺</button>
+                    <button class="emoji-btn">🌻</button>
+                    <button class="emoji-btn">🌼</button>
+                    <button class="emoji-btn">🌷</button>
+                    
+                    <!-- Mental Health -->
+                    <button class="emoji-btn">🧠</button>
+                    <button class="emoji-btn">💭</button>
+                    <button class="emoji-btn">💡</button>
+                    <button class="emoji-btn">🎭</button>
+                    <button class="emoji-btn">🎨</button>
+                    <button class="emoji-btn">🎵</button>
+                    <button class="emoji-btn">📚</button>
+                    <button class="emoji-btn">✍️</button>
+                    
+                    <!-- Emergency Services -->
+                    <button class="emoji-btn">🚑</button>
+                    <button class="emoji-btn">🚨</button>
+                    <button class="emoji-btn">🆘</button>
+                    <button class="emoji-btn">📞</button>
+                    <button class="emoji-btn">🔔</button>
+                    <button class="emoji-btn">⚠️</button>
+                    <button class="emoji-btn">🚪</button>
+                    <button class="emoji-btn">🏃‍♂️</button>
+                    
+                    <!-- Recovery & Healing -->
+                    <button class="emoji-btn">🛏️</button>
+                    <button class="emoji-btn">🛁</button>
+                    <button class="emoji-btn">🧴</button>
+                    <button class="emoji-btn">🫖</button>
+                    <button class="emoji-btn">🍵</button>
+                    <button class="emoji-btn">🕯️</button>
+                    <button class="emoji-btn">🕊️</button>
+                    <button class="emoji-btn">🌈</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-secondary py-4 border-t border-tertiary text-center text-sm">
+        <p class="text-primary opacity-75">© 2025 CareCoreAI Health. This is not a substitute for professional medical advice.</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+    <!-- Scripts -->
+    <script src="js/state.js"></script>
+    <script src="js/keys.js"></script>
+    <script src="js/chat.js"></script>
+
+    <!-- Typing indicator template -->
+    <template id="typingIndicator">
+        <div class="chat-message ai-message typing-indicator">
+            <div class="message-content bg-accent bg-opacity-10 p-4 rounded-lg border-l-4 border-accent shadow-sm">
+                <div class="flex items-center mb-2">
+                    <div class="assistant-avatar mr-2">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="font-medium text-accent">CareCoreAI</span>
+                </div>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </template>
+</body>
+</html>

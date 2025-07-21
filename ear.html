@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCore - Digital Hearing Tests</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AOS Animation Library -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore-compat.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #6366F1 0%, #3B82F6 100%);
+        }
+        .test-card {
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .badge-locked {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+        .badge-unlocked {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+            }
+        }
+        /* Test-specific styling */
+        .volume-indicator {
+            height: 10px;
+            background: linear-gradient(90deg, #3B82F6, #6366F1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .sound-wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            margin: 20px 0;
+        }
+        .wave-bar {
+            width: 6px;
+            height: 20px;
+            margin: 0 2px;
+            background-color: #6366F1;
+            border-radius: 3px;
+            animation: wave 1.5s infinite ease-in-out;
+        }
+        @keyframes wave {
+            0%, 100% {
+                transform: scaleY(1);
+            }
+            50% {
+                transform: scaleY(2);
+            }
+        }
+        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.5s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.6s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.7s; }
+        .wave-bar:nth-child(8) { animation-delay: 0.8s; }
+        .wave-bar:nth-child(9) { animation-delay: 0.9s; }
+        .wave-bar:nth-child(10) { animation-delay: 1.0s; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md py-4 fixed w-full z-10">
+        <div class="container mx-auto px-4 md:px-6 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-ear-deaf text-indigo-600 text-2xl"></i>
+                <span class="font-bold text-xl text-gray-800">CareCore Hearing</span>
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="landing.html" class="text-gray-700 hover:text-indigo-600 transition duration-300">Home</a>
+                <a href="#tests" class="text-gray-700 hover:text-indigo-600 transition duration-300">Hearing Tests</a>
+                <a href="#dashboard" class="text-gray-700 hover:text-indigo-600 transition duration-300">Dashboard</a>
+                <a href="#about" class="text-gray-700 hover:text-indigo-600 transition duration-300">About</a>
+                <a href="#faq" class="text-gray-700 hover:text-indigo-600 transition duration-300">FAQ</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="userProfileSection" class="hidden">
+                    <button id="profileButton" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition duration-300">
+                        <i class="fas fa-user-circle text-xl"></i>
+                        <span id="userDisplayName">Profile</span>
+                    </button>
+                </div>
+                <button class="md:hidden text-gray-700" id="mobileMenuButton">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+                <a href="#" class="text-gray-700 hover:text-indigo-600 transition duration-300">Home</a>
+                <a href="#tests" class="text-gray-700 hover:text-indigo-600 transition duration-300">Hearing Tests</a>
+                <a href="#dashboard" class="text-gray-700 hover:text-indigo-600 transition duration-300">Dashboard</a>
+                <a href="#about" class="text-gray-700 hover:text-indigo-600 transition duration-300">About</a>
+                <a href="#faq" class="text-gray-700 hover:text-indigo-600 transition duration-300">FAQ</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient pt-28 pb-20">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-10 md:mb-0" data-aos="fade-right">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+                        Monitor Your Hearing Health with Digital Tests
+                    </h1>
+                    <p class="text-indigo-100 text-lg mb-8">
+                        Comprehensive hearing assessments to help you understand your auditory health from the comfort of your home.
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <a href="#tests" class="bg-white text-indigo-600 hover:bg-gray-100 font-medium px-6 py-3 rounded-lg text-center transition duration-300">
+                            Try Our Tests
+                        </a>
+                        <a href="#about" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-medium px-6 py-3 rounded-lg text-center transition duration-300">
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="md:w-1/2" data-aos="fade-left">
+                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&h=400&q=80" alt="Hearing Test Illustration" class="rounded-lg shadow-xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tests Section -->
+    <section id="tests" class="py-20 bg-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our Hearing Tests</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Explore our range of digital hearing tests designed to assess different aspects of your auditory health.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Speech Recognition Test Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="h-40 bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-keyboard text-indigo-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Speech Recognition Test</h3>
+                        <p class="text-gray-600 mb-4">
+                            Assess your ability to understand spoken words by typing what you hear.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-indigo-600">
+                                <i class="fas fa-clock mr-1"></i> 8-12 mins
+                            </span>
+                            <button onclick="startTest('speech-recognition')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                                Start Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Test Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="h-40 bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-list-ol text-green-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Multiple Choice Test</h3>
+                        <p class="text-gray-600 mb-4">
+                            Select the correct phrase from options after listening to audio.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-green-600">
+                                <i class="fas fa-clock mr-1"></i> 6-10 mins
+                            </span>
+                            <button onclick="startTest('multiple-choice')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                                Start Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Volume Sensitivity Test Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="h-40 bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-volume-down text-blue-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Volume Sensitivity Test</h3>
+                        <p class="text-gray-600 mb-4">
+                            Determine the lowest volume level at which you can still hear clearly.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-blue-600">
+                                <i class="fas fa-clock mr-1"></i> 5-8 mins
+                            </span>
+                            <button onclick="startTest('volume-sensitivity')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                                Start Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Detection Test Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="400">
+                    <div class="h-40 bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-search text-purple-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Word Detection Test</h3>
+                        <p class="text-gray-600 mb-4">
+                            Identify if specific words are present in spoken sentences.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-purple-600">
+                                <i class="fas fa-clock mr-1"></i> 7-10 mins
+                            </span>
+                            <button onclick="startTest('word-detection')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                                Start Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequency Range Test Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="500">
+                    <div class="h-40 bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-wave-square text-yellow-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Frequency Range Test</h3>
+                        <p class="text-gray-600 mb-4">
+                            Test your hearing range across different frequency spectrums.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-yellow-600">
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
+                            </span>
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complete Hearing Exam Card -->
+                <div class="test-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300" data-aos="fade-up" data-aos-delay="600">
+                    <div class="h-40 bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-list-check text-red-600 text-5xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Complete Hearing Exam</h3>
+                        <p class="text-gray-600 mb-4">
+                            Take all our tests in sequence for a comprehensive overview of your hearing health.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-red-600">
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
+                            </span>
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Your Hearing Dashboard</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Track your progress, view your test history, and earn achievements as you maintain your hearing health.
+                </p>
+            </div>
+
+            <!-- Dashboard Content (hidden by default, shown when logged in) -->
+            <div id="dashboardContent" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Test History -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl shadow-lg p-6 h-full" data-aos="fade-up">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Your Test History</h3>
+                            <div class="mb-6">
+                                <canvas id="testHistoryChart" width="400" height="200"></canvas>
+                            </div>
+                            <div id="recentTests" class="space-y-4">
+                                <!-- Recent tests will be loaded here -->
+                                <div class="animate-pulse">
+                                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-xl shadow-lg p-6 h-full" data-aos="fade-up" data-aos-delay="100">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">Your Achievements</h3>
+                                <span id="badgeCount" class="bg-indigo-100 text-indigo-800 text-sm font-medium px-2.5 py-0.5 rounded">0/12</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mb-6">
+                                <!-- Badge 1 -->
+                                <div class="text-center badge-item" data-badge="first_test">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-medal text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">First Test</p>
+                                </div>
+                                <!-- Badge 2 -->
+                                <div class="text-center badge-item" data-badge="three_tests">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-award text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">3 Tests</p>
+                                </div>
+                                <!-- Badge 3 -->
+                                <div class="text-center badge-item" data-badge="week_streak">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-calendar-check text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Weekly Streak</p>
+                                </div>
+                                <!-- Badge 4 -->
+                                <div class="text-center badge-item" data-badge="all_tests">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-check-double text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">All Tests</p>
+                                </div>
+                                <!-- Badge 5 -->
+                                <div class="text-center badge-item" data-badge="share_results">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-share-alt text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Share Results</p>
+                                </div>
+                                <!-- Badge 6 -->
+                                <div class="text-center badge-item" data-badge="month_streak">
+                                    <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2 badge-locked">
+                                        <i class="fas fa-fire text-indigo-600 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Month Streak</p>
+                                </div>
+                            </div>
+                            <!-- Current Streak -->
+                            <div class="bg-indigo-50 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="font-semibold text-indigo-800">Current Streak:</h4>
+                                    <span id="currentStreak" class="text-2xl font-bold text-indigo-600">0 Days</span>
+                                </div>
+                                <div class="mt-2 flex space-x-1">
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                    <div class="h-2 flex-1 rounded-full bg-gray-200"></div>
+                                </div>
+                                <p class="text-xs text-indigo-600 mt-1">Complete a test every day to build your streak!</p>
+                            </div>
+                            <!-- Next Test Recommendation -->
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-green-800 mb-2">Recommended Next Test:</h4>
+                                <div id="nextTestRecommendation" class="flex items-center">
+                                    <div class="mr-3 bg-green-100 p-2 rounded-lg">
+                                        <i class="fas fa-keyboard text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-green-800">Speech Recognition Test</p>
+                                        <p class="text-sm text-green-600">Last completed: Never</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Modal/Overlay (Hidden by default) -->
+    <div id="testModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="bg-indigo-600 text-white p-6 rounded-t-xl flex justify-between items-center">
+                <h2 id="testModalTitle" class="text-2xl font-bold">Speech Recognition Test</h2>
+                <button id="closeTestModal" class="text-white hover:text-indigo-200 transition duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Calibration Step -->
+            <div id="calibrationStep" class="p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Setup & Calibration</h3>
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4">
+                        For the most accurate results, please follow these instructions:
+                    </p>
+                    <ul class="space-y-2 text-gray-600 mb-6">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Use headphones for the best audio quality and consistent volume</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Find a quiet environment with minimal background noise</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Set your device volume to a comfortable listening level (about 60%)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>If you use hearing aids, please wear them during the test</span>
+                        </li>
+                    </ul>
+                    
+                    <!-- Volume Calibration -->
+                    <div class="mb-8 bg-gray-100 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">Volume Calibration</h4>
+                        <p class="text-gray-700 mb-4">
+                            Click the button below to play a test sound. Adjust your volume until it's comfortable but not too loud.
+                        </p>
+                        <div class="flex justify-center mb-4">
+                            <button id="playCalibrationSound" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                                <i class="fas fa-volume-up mr-2"></i> Play Test Sound
+                            </button>
+                        </div>
+                        <div class="sound-wave hidden">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                This test is informational only and not a replacement for a professional hearing exam. If you experience hearing problems, please consult an audiologist.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button id="startTestButton" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                        Start Test
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Test Content -->
+            <div id="testContent" class="hidden p-6">
+                <!-- Test content will be dynamically loaded here -->
+                <div class="text-center" id="loading">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+                    <p class="mt-4 text-gray-600">Loading test...</p>
+                </div>
+                
+                <!-- Speech Recognition Test Content -->
+                <div id="speech-recognition-content" class="hidden">
+                    <p class="text-gray-700 mb-6">
+                        Listen carefully to the spoken phrase and type exactly what you hear in the box below.
+                    </p>
+                    
+                    <div class="flex justify-center mb-6">
+                        <button id="playSpeech" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-play mr-2"></i> Play Phrase
+                        </button>
+                    </div>
+                    
+                    <div class="sound-wave mb-6 hidden">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="heardPhrase" class="block text-gray-700 mb-2">Type what you heard:</label>
+                        <textarea id="heardPhrase" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button id="cancelTest" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition duration-300">
+                            Cancel Test
+                        </button>
+                        <button id="submitTest" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            Submit Results
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Multiple Choice Test Content -->
+                <div id="multiple-choice-content" class="hidden">
+                    <p class="text-gray-700 mb-6">
+                        Listen to the spoken phrase and select the correct option from the choices below.
+                    </p>
+                    
+                    <div class="flex justify-center mb-6">
+                        <button id="playMultipleChoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-play mr-2"></i> Play Phrase
+                        </button>
+                    </div>
+                    
+                    <div class="sound-wave mb-6 hidden">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 mb-2">Select what you heard:</label>
+                        <div id="multipleChoiceOptions" class="space-y-3">
+                            <!-- Options will be dynamically inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button id="cancelTest" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition duration-300">
+                            Cancel Test
+                        </button>
+                        <button id="submitTest" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            Submit Results
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Volume Sensitivity Test Content -->
+                <div id="volume-sensitivity-content" class="hidden">
+                    <p class="text-gray-700 mb-6">
+                        A word will be played at decreasing volume levels. Click "I Can Hear It" until you can no longer hear the word clearly.
+                    </p>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Current Volume Level:</span>
+                            <span id="currentVolumeLevel" class="text-sm font-bold text-indigo-600">100%</span>
+                        </div>
+                        <div class="volume-indicator" id="volumeIndicator"></div>
+                    </div>
+                    
+                    <div class="flex justify-center mb-6">
+                        <button id="playVolumeTest" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-play mr-2"></i> Play Word
+                        </button>
+                    </div>
+                    
+                    <div class="sound-wave mb-6 hidden">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-4">
+                        <button id="heardButton" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-check mr-2"></i> I Can Hear It
+                        </button>
+                        <button id="notHeardButton" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-times mr-2"></i> I Can't Hear It
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Word Detection Test Content -->
+                <div id="word-detection-content" class="hidden">
+                    <p class="text-gray-700 mb-6">
+                        Listen to the sentence and indicate whether you heard the target word.
+                    </p>
+                    
+                    <div class="flex justify-center mb-6">
+                        <button id="playSentence" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-play mr-2"></i> Play Sentence
+                        </button>
+                    </div>
+                    
+                    <div class="sound-wave mb-6 hidden">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    
+                    <div class="mb-6 bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800 mb-2">Did you hear the word:</h4>
+                        <p id="targetWord" class="text-xl font-bold text-indigo-600 text-center">"apple"</p>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-4">
+                        <button id="yesButton" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-check mr-2"></i> Yes
+                        </button>
+                        <button id="noButton" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-times mr-2"></i> No
+                        </button>
+                    </div>
+                </div>
+
+                
+                <!-- Test Results -->
+                <div id="testResults" class="hidden">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-check text-green-600 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Test Completed!</h3>
+                        <p class="text-gray-600" id="resultsMessage">Your hearing test results have been recorded.</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                        <h4 class="font-bold text-gray-800 mb-3">Your Results:</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Test Type:</span>
+                                <span class="font-medium" id="testTypeResult">Speech Recognition</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Score:</span>
+                                <span class="font-medium" id="testScoreResult">85%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Test Date:</span>
+                                <span class="font-medium" id="testDateResult">Today</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-6 rounded-lg mb-6">
+                        <h4 class="font-bold text-gray-800 mb-3">Recommendations:</h4>
+                        <p class="text-gray-700" id="testRecommendation">
+                            Your hearing appears to be in the normal range. Consider repeating this test every 3-6 months to monitor any changes.
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button id="viewDashboard" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition duration-300">
+                            View Dashboard
+                        </button>
+                        <button id="shareResults" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            Share Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About CareCore Hearing</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Learn more about our mission to make hearing health accessible to everyone.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div data-aos="fade-right">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
+                    <p class="text-gray-600 mb-6">
+                        At CareCore Hearing, we believe that everyone should have access to basic hearing health tools. Our digital hearing tests provide convenient, at-home screening to help you monitor your auditory health between professional exams.
+                    </p>
+                    <p class="text-gray-600">
+                        While our tests are not a replacement for professional hearing care, they can help identify potential issues early and encourage regular hearing monitoring.
+                    </p>
+                </div>
+                <div data-aos="fade-left">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">How It Works</h3>
+                    <p class="text-gray-600 mb-6">
+                        Our tests use the Web Speech API to generate speech samples at different volumes and frequencies. Each test includes calibration instructions to help ensure accurate results.
+                    </p>
+                    <p class="text-gray-600">
+                        Your test results are stored securely in your personal dashboard, allowing you to track changes over time and share them with your audiologist if needed.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Find answers to common questions about our digital hearing tests.
+                </p>
+            </div>
+            
+            <div class="max-w-3xl mx-auto space-y-6">
+                <!-- FAQ Item 1 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden" data-aos="fade-up">
+                    <button class="faq-toggle w-full text-left p-6 focus:outline-none">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">Are these tests a replacement for a professional hearing exam?</h3>
+                            <i class="fas fa-chevron-down text-indigo-600 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-6">
+                        <p class="text-gray-600">
+                            No, our tests are not a replacement for professional hearing care. They are designed to provide informational screening between professional exams. If you experience hearing problems or notice changes in your hearing, please consult an audiologist.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ Item 2 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+                    <button class="faq-toggle w-full text-left p-6 focus:outline-none">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">How often should I take these tests?</h3>
+                            <i class="fas fa-chevron-down text-indigo-600 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-6">
+                        <p class="text-gray-600">
+                            For most people, taking each test every 3-6 months provides a good balance between monitoring your hearing and avoiding over-testing. If you notice changes in your hearing, you may want to test more frequently and consult a professional.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ Item 3 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden" data-aos="fade-up" data-aos-delay="200">
+                    <button class="faq-toggle w-full text-left p-6 focus:outline-none">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">How accurate are the tests?</h3>
+                            <i class="fas fa-chevron-down text-indigo-600 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-6">
+                        <p class="text-gray-600">
+                            Our tests are designed to provide reasonably accurate results when performed under proper conditions (using headphones, in a quiet environment, etc.). However, results can vary based on audio equipment quality, background noise, and other factors. For precise measurements, please visit an audiologist.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ Item 4 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden" data-aos="fade-up" data-aos-delay="300">
+                    <button class="faq-toggle w-full text-left p-6 focus:outline-none">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">Is my hearing data secure?</h3>
+                            <i class="fas fa-chevron-down text-indigo-600 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-6">
+                        <p class="text-gray-600">
+                            Yes, we take your privacy seriously. All test results are stored securely in your personal account and are not shared with third parties without your permission. You can review our privacy policy for more details.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-ear-deaf text-indigo-400 text-2xl"></i>
+                        <span class="font-bold text-xl">CareCore Hearing</span>
+                    </div>
+                    <p class="text-gray-400">
+                        Digital hearing tests to help you monitor your auditory health between professional exams.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Home</a></li>
+                        <li><a href="#tests" class="text-gray-400 hover:text-white transition duration-300">Hearing Tests</a></li>
+                        <li><a href="#dashboard" class="text-gray-400 hover:text-white transition duration-300">Dashboard</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-white transition duration-300">About</a></li>
+                        <li><a href="#faq" class="text-gray-400 hover:text-white transition duration-300">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Medical Disclaimer</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">brownnestro0@gmail.com</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">(123) 456-7890</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 CareCore Hearing. All rights reserved.</p>
+                <p class="mt-2 text-sm">This service is not intended to diagnose, treat, cure, or prevent any disease.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/state.js"></script>
+    <script src="js/keys.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="js/ear.js"></script>
+</body>
+</html>

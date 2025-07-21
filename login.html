@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCore - Healthcare Platform</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="light-mode">
+    <!-- Logo -->
+    <div class="logo-container">
+        <a href="#" class="logo">
+            <i class="fas fa-heartbeat"></i>
+            <span>CareCore</span>
+        </a>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle-btn" id="theme-toggle">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <!-- Health Icons Background -->
+    <div id="health-icons-container"></div>
+
+    <!-- Main Content -->
+    <main class="flex items-center justify-center w-full min-h-screen py-12 px-4">
+        <div class="form-container">
+            <div class="text-center mb-6">
+                <h1 class="futuristic-text text-3xl font-bold mb-2" style="color: var(--primary);" id="form-title">Welcome Back</h1>
+                <p class="text-gray-600 dark-mode:text-gray-300" id="form-subtitle">Sign in to access your CareCore account</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="form-panel active" id="login-panel">
+                <!-- Social Login -->
+                <div class="social-login-btn" id="google-login">
+                    <i class="fab fa-google mr-3"></i>
+                    <span>Continue with Google</span>
+                </div>
+
+                <div class="or-divider">
+                    <span>OR</span>
+                </div>
+
+                <!-- Email Login Form -->
+                <form id="login-form">
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="login-email" class="input-field" placeholder="Email" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="login-password" class="input-field" placeholder="Password" required>
+                        <i class="fas fa-eye toggle-password" data-target="login-password"></i>
+                    </div>
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="mr-2">
+                            <label for="remember-me" class="text-sm text-gray-600 dark-mode:text-gray-300">Remember me</label>
+                        </div>
+                        <a href="#" id="forgot-password" class="text-sm hover:underline" style="color: var(--primary);">Forgot password?</a>
+                    </div>
+                    <div class="error-message" id="login-error"></div>
+                    <button type="submit" class="btn-primary">
+                        <div class="loading-spinner" id="login-spinner"></div>
+                        <span>Sign In</span>
+                    </button>
+                </form>
+
+                <div class="text-center mt-6">
+                    <p class="text-gray-600 dark-mode:text-gray-300">
+                        Don't have an account?
+                        <a href="#" class="hover:underline" style="color: var(--primary);" id="show-signup">Sign up</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="form-panel" id="signup-panel">
+                <!-- Social Signup -->
+                <div class="social-login-btn" id="google-signup">
+                    <i class="fab fa-google mr-3"></i>
+                    <span>Sign up with Google</span>
+                </div>
+
+                <div class="or-divider">
+                    <span>OR</span>
+                </div>
+
+                <!-- Email Signup Form -->
+                <form id="signup-form">
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="signup-username" class="input-field" placeholder="Username" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="signup-email" class="input-field" placeholder="Email" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="signup-password" class="input-field" placeholder="Password" required>
+                        <i class="fas fa-eye toggle-password" data-target="signup-password"></i>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="signup-confirm-password" class="input-field" placeholder="Confirm Password" required>
+                        <i class="fas fa-eye toggle-password" data-target="signup-confirm-password"></i>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user-tag input-icon"></i>
+                        <div class="custom-select">
+                            <div class="select-selected" id="user-type-display">Select your role</div>
+                            <div class="select-items" id="user-type-dropdown">
+                                <div class="select-item" data-value="student">Student</div>
+                                <div class="select-item" data-value="regular">Regular</div>
+                                <div class="select-item" data-value="doctor">Doctor</div>
+                                <div class="select-item" data-value="enthusiast">Enthusiast</div>
+                            </div>
+                            <input type="hidden" id="user-type" value="">
+                        </div>
+                    </div>
+                    <div class="error-message" id="signup-error"></div>
+                    <div class="success-message" id="signup-success"></div>
+                    <button type="submit" class="btn-primary">
+                        <div class="loading-spinner" id="signup-spinner"></div>
+                        <span>Create Account</span>
+                    </button>
+                </form>
+
+                <div class="text-center mt-6">
+                    <p class="text-gray-600 dark-mode:text-gray-300">
+                        Already have an account?
+                        <a href="#" class="hover:underline" style="color: var(--primary);" id="show-login">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Reset Password</h3>
+            <p class="mb-4 text-gray-600 dark:text-gray-300">Enter your email address and we'll send you a link to reset your password.</p>
+            <input type="email" id="reset-email" placeholder="Your email address" 
+                class="w-full p-3 mb-4 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white">
+            <div id="reset-error" class="text-red-500 dark:text-red-400 mb-4 hidden"></div>
+            <div id="reset-success" class="text-green-500 dark:text-green-400 mb-4 hidden"></div>
+            <div class="flex justify-end gap-3">
+                <button id="cancel-reset" class="px-4 py-2 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                <button id="send-reset-link" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">Send Link</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="js/keys.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>
