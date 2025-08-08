@@ -18,15 +18,29 @@ let testResults = {
     left: { smallestLine: 0, correctAnswers: [] }
 };
 
-// Snellen chart configuration
-const snellenRows = [
-    { size: 72, letters: "E F P T O Z", correct: "EFPTOZ" },
-    { size: 60, letters: "L P E D P E C F D", correct: "LPEDPECFD" },
-    { size: 48, letters: "F D E C F D P O T E", correct: "FDECFDPOTE" },
-    { size: 36, letters: "E D F C Z P O T E C", correct: "EDFCZPOTEC" },
-    { size: 24, letters: "D F C E O T P L E F", correct: "DFCEOTPLEF" },
-    { size: 18, letters: "E F L O P T D C E P", correct: "EFLOPTDCED" }
-];
+// Snellen chart configuration with random letter generation
+const snellenLetters = ['E', 'F', 'P', 'T', 'O', 'Z', 'L', 'D', 'C', 'A', 'B', 'H', 'K', 'M', 'N', 'R', 'S', 'U', 'V', 'W', 'X', 'Y'];
+
+function generateRandomSnellenChart() {
+    return [
+        { size: 72, letterCount: 6 },
+        { size: 60, letterCount: 9 },
+        { size: 48, letterCount: 10 },
+        { size: 36, letterCount: 10 },
+        { size: 24, letterCount: 10 },
+        { size: 18, letterCount: 10 }
+    ].map(row => {
+        const letters = [];
+        for (let i = 0; i < row.letterCount; i++) {
+            letters.push(snellenLetters[Math.floor(Math.random() * snellenLetters.length)]);
+        }
+        return {
+            ...row,
+            letters: letters.join(' '),
+            correct: letters.join('')
+        };
+    });
+}
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -163,10 +177,12 @@ function setupTestButtons() {
 
 // Load user eye data from Firestore
 function loadUserEyeData() {
+    console.log('Loading user eye data for:', currentUser.uid);
     db.collection('eye').doc(currentUser.uid).get()
         .then(doc => {
             if (doc.exists) {
                 userEyeData = doc.data();
+                console.log('Loaded existing eye data:', userEyeData);
                 // Convert Firestore timestamps to JavaScript Date objects
                 if (userEyeData.testHistory) {
                     userEyeData.testHistory = userEyeData.testHistory.map(test => ({
@@ -180,14 +196,24 @@ function loadUserEyeData() {
                 }
                 updateDashboard();
             } else {
+                console.log('No existing eye data found, creating new data');
                 userEyeData = {
                     testHistory: [],
                     badges: [],
                     lastTest: null,
-                    streak: 0
+                    streak: 0,
+                    totalTests: 0,
+                    bestScore: 0
                 };
-                db.collection('eye').doc(currentUser.uid).set(userEyeData);
-                updateDashboard();
+                db.collection('eye').doc(currentUser.uid).set(userEyeData)
+                    .then(() => {
+                        console.log('Created new eye data document');
+                        updateDashboard();
+                    })
+                    .catch(error => {
+                        console.error("Error creating new eye data:", error);
+                        updateDashboard();
+                    });
             }
         })
         .catch(error => {
@@ -197,7 +223,9 @@ function loadUserEyeData() {
                 testHistory: [],
                 badges: [],
                 lastTest: null,
-                streak: 0
+                streak: 0,
+                totalTests: 0,
+                bestScore: 0
             };
             updateDashboard();
         });
@@ -205,6 +233,17 @@ function loadUserEyeData() {
 
 // Update dashboard with user data
 function updateDashboard() {
+    // Check if Chart.js is available before trying to create charts
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded yet, skipping chart initialization');
+        // Still update other dashboard elements
+        updateRecentTests();
+        updateBadges();
+        updateStreak();
+        updateNextTestRecommendation();
+        return;
+    }
+    
     initTestHistoryChart();
     updateRecentTests();
     updateBadges();
@@ -217,6 +256,15 @@ function initTestHistoryChart() {
     const chartElement = document.getElementById('testHistoryChart');
     if (!chartElement || typeof Chart === 'undefined') return;
     
+    // Destroy existing chart if it exists and is a valid Chart instance
+    if (window.testHistoryChart && typeof window.testHistoryChart.destroy === 'function') {
+        try {
+            window.testHistoryChart.destroy();
+        } catch (error) {
+            console.warn('Error destroying existing chart:', error);
+        }
+    }
+    
     const ctx = chartElement.getContext('2d');
     const labels = [];
     const scores = [];
@@ -227,7 +275,9 @@ function initTestHistoryChart() {
         labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         
         if (test.testType === 'visual-acuity') {
-            scores.push((test.overallScore / 6) * 100);
+            // Convert line number to percentage (line 8 = 100%, line 0 = 0%)
+            const percentage = Math.round((test.overallScore / 8) * 100);
+            scores.push(percentage);
         } else {
             scores.push(80);
         }
@@ -238,38 +288,42 @@ function initTestHistoryChart() {
         scores.push(0);
     }
     
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Vision Score',
-                data: scores,
-                fill: false,
-                borderColor: '#6366F1',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Score: ${Math.round(context.raw)}/100`;
+    try {
+        window.testHistoryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Vision Score',
+                    data: scores,
+                    fill: false,
+                    borderColor: '#6366F1',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Score: ${Math.round(context.raw)}%`;
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error creating chart:', error);
+    }
 }
 
 // Update recent tests list
@@ -295,9 +349,14 @@ function updateRecentTests() {
         
         let testName = '';
         let testColor = '';
+        let score = '';
         
         switch(test.testType) {
-            case 'visual-acuity': testName = 'Visual Acuity Test'; testColor = 'indigo'; break;
+            case 'visual-acuity': 
+                testName = 'Visual Acuity Test'; 
+                testColor = 'indigo'; 
+                score = test.result || `${test.overallScore}/8`;
+                break;
             case 'color-vision': testName = 'Color Vision Test'; testColor = 'green'; break;
             case 'contrast': testName = 'Contrast Sensitivity'; testColor = 'blue'; break;
             case 'astigmatism': testName = 'Astigmatism Test'; testColor = 'purple'; break;
@@ -309,7 +368,7 @@ function updateRecentTests() {
             <div class="border-b border-gray-200 pb-4">
                 <div class="flex justify-between items-center mb-1">
                     <h4 class="font-medium text-gray-800">${testName}</h4>
-                    <span class="text-sm text-${testColor}-600">${test.result || 'Completed'}</span>
+                    <span class="text-sm text-${testColor}-600">${score}</span>
                 </div>
                 <p class="text-sm text-gray-500">Completed: ${dateStr}</p>
             </div>
@@ -321,6 +380,7 @@ function updateRecentTests() {
 
 // Update badges display
 function updateBadges() {
+    console.log('Updating badges with data:', userEyeData);
     const badgeCount = userEyeData.badges ? userEyeData.badges.length : 0;
     const badgeCountElement = document.getElementById('badgeCount');
     if (badgeCountElement) {
@@ -330,6 +390,8 @@ function updateBadges() {
     document.querySelectorAll('.badge-item').forEach(badge => {
         const badgeId = badge.getAttribute('data-badge');
         const badgeIcon = badge.querySelector('.w-16');
+        
+        console.log(`Checking badge ${badgeId}:`, userEyeData.badges && userEyeData.badges.includes(badgeId));
         
         if (badgeIcon && userEyeData.badges && userEyeData.badges.includes(badgeId)) {
             badgeIcon.classList.remove('badge-locked');
@@ -422,6 +484,7 @@ function updateNextTestRecommendation() {
 
 // Test modal functionality
 let currentTest = null;
+let currentSnellenRows = [];
 
 function startTest(testType) {
     console.log('startTest called with:', testType);
@@ -432,6 +495,9 @@ function startTest(testType) {
         right: { smallestLine: 0, correctAnswers: [] },
         left: { smallestLine: 0, correctAnswers: [] }
     };
+    
+    // Generate new random Snellen chart for each test
+    currentSnellenRows = generateRandomSnellenChart();
     
     const modalTitle = document.getElementById('testModalTitle');
     if (modalTitle) {
@@ -467,10 +533,17 @@ function startTest(testType) {
     const testContent = document.getElementById('testContent');
     const testModal = document.getElementById('testModal');
     
-    if (calibrationStep) calibrationStep.classList.remove('hidden');
-    if (testContent) testContent.classList.add('hidden');
-    if (testModal) testModal.classList.remove('hidden');
+    // Check if mobile device and skip calibration
+    if (window.innerWidth <= 768) {
+        if (calibrationStep) calibrationStep.classList.add('hidden');
+        if (testContent) testContent.classList.remove('hidden');
+        proceedToTest();
+    } else {
+        if (calibrationStep) calibrationStep.classList.remove('hidden');
+        if (testContent) testContent.classList.add('hidden');
+    }
     
+    if (testModal) testModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
 
@@ -594,8 +667,16 @@ function setupVisualAcuityTest() {
                         <span class="font-medium" id="acuityResult">20/20</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Smallest Line Read:</span>
-                        <span class="font-medium" id="smallestLineResult">Line 8</span>
+                        <span class="text-gray-600">Right Eye Score:</span>
+                        <span class="font-medium" id="rightEyeResult">0/6</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Left Eye Score:</span>
+                        <span class="font-medium" id="leftEyeResult">0/6</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Overall Score:</span>
+                        <span class="font-medium" id="overallScoreResult">0/6</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Test Date:</span>
@@ -658,19 +739,15 @@ function setupVisualAcuityTest() {
             });
         }
 
-        // View Dashboard button (FIXED)
+        // View Dashboard button
         const viewDashboardBtn = document.getElementById('viewDashboard');
         if (viewDashboardBtn) {
             viewDashboardBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 closeTestModal();
-                // Scroll to dashboard section if it exists
                 const dashboardSection = document.getElementById('dashboard');
                 if (dashboardSection) {
                     dashboardSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    // Alternatively, you can redirect to the dashboard page
-                    window.location.href = '#dashboard';
                 }
             });
         }
@@ -706,7 +783,7 @@ function startEyeTest() {
     
     snellenContainer.innerHTML = '';
     
-    snellenRows.forEach((row, index) => {
+    currentSnellenRows.forEach((row, index) => {
         const rowDiv = document.createElement('div');
         rowDiv.className = `snellen-row-${index+1} mb-4 ${index > 0 ? 'hidden' : ''}`;
         rowDiv.id = `row-${index}`;
@@ -757,7 +834,7 @@ function processRowSubmission() {
     clearInterval(testTimer);
     
     const userAnswer = document.getElementById('userInput').value.toUpperCase().replace(/\s/g, '');
-    const correctAnswer = snellenRows[currentRow].correct;
+    const correctAnswer = currentSnellenRows[currentRow].correct;
     
     testResults[currentEye].correctAnswers.push({
         row: currentRow,
@@ -766,7 +843,7 @@ function processRowSubmission() {
         correctAnswer: correctAnswer
     });
     
-    if (currentRow < snellenRows.length - 1) {
+    if (currentRow < currentSnellenRows.length - 1) {
         currentRow++;
         showCurrentRow();
     } else {
@@ -815,16 +892,18 @@ function completeVisualAcuityTest() {
     document.getElementById('testResults').classList.remove('hidden');
     
     document.getElementById('acuityResult').textContent = acuityResult;
-    document.getElementById('smallestLineResult').textContent = `Right: ${rightScore}, Left: ${leftScore}`;
+    document.getElementById('rightEyeResult').textContent = `${rightScore}/6`;
+    document.getElementById('leftEyeResult').textContent = `${leftScore}/6`;
+    document.getElementById('overallScoreResult').textContent = `${overallScore}/6`;
     document.getElementById('testDateResult').textContent = new Date().toLocaleDateString();
     
     let recommendation = '';
-    if (overallScore >= 6) {
-        recommendation = 'Your vision appears to be in the normal range.';
-    } else if (overallScore >= 4) {
-        recommendation = 'Your vision may be below average. Consider consulting an eye care professional.';
+    if (overallScore >= 5) {
+        recommendation = 'Excellent! Your vision appears to be in the normal range. Continue to monitor your eye health regularly.';
+    } else if (overallScore >= 3) {
+        recommendation = 'Your vision may be below average. Consider scheduling an appointment with an eye care professional for a comprehensive exam.';
     } else {
-        recommendation = 'Your results suggest significant vision impairment. Please consult an eye care professional.';
+        recommendation = 'Your results suggest significant vision impairment. Please consult an eye care professional as soon as possible for proper diagnosis and treatment.';
     }
     document.getElementById('testRecommendation').textContent = recommendation;
     
@@ -834,11 +913,13 @@ function completeVisualAcuityTest() {
         overallScore: overallScore,
         result: acuityResult,
         date: new Date(),
-        detailedResults: testResults
+        detailedResults: testResults,
+        rightEyeScore: rightScore,
+        leftEyeScore: leftScore
     });
 }
 
-// Save test results to Firestore
+// Save test results to Firestore with improved gamification
 function saveTestResults(testType, results) {
     const testRecord = {
         testType: testType,
@@ -848,16 +929,30 @@ function saveTestResults(testType, results) {
     
     const newTestHistory = userEyeData.testHistory ? [...userEyeData.testHistory, testRecord] : [testRecord];
     const newBadges = userEyeData.badges ? [...userEyeData.badges] : [];
+    const newTotalTests = (userEyeData.totalTests || 0) + 1;
+    const newBestScore = Math.max(userEyeData.bestScore || 0, results.overallScore);
     
-    // Badge logic
+    // Enhanced badge logic
     if (!newBadges.includes('first_test')) newBadges.push('first_test');
-    if (newTestHistory.length >= 3 && !newBadges.includes('three_tests')) newBadges.push('three_tests');
-    if (results.overallScore === 8 && !newBadges.includes('perfect_vision')) newBadges.push('perfect_vision');
-    if (results.rightEye.smallestLine === results.leftEye.smallestLine && 
-        results.rightEye.smallestLine > 0 && 
-        !newBadges.includes('both_eyes_same')) newBadges.push('both_eyes_same');
+    if (newTotalTests >= 3 && !newBadges.includes('three_tests')) newBadges.push('three_tests');
+    if (newTotalTests >= 5 && !newBadges.includes('five_tests')) newBadges.push('five_tests');
+    if (results.overallScore >= 6 && !newBadges.includes('excellent_vision')) newBadges.push('excellent_vision');
+    if (results.overallScore >= 4 && !newBadges.includes('good_vision')) newBadges.push('good_vision');
+    if (results.rightEyeScore === results.leftEyeScore && 
+        results.rightEyeScore > 0 && 
+        !newBadges.includes('balanced_vision')) newBadges.push('balanced_vision');
+    if (results.rightEyeScore >= 5 && results.leftEyeScore >= 5 && 
+        !newBadges.includes('perfect_both_eyes')) newBadges.push('perfect_both_eyes');
     
-    // Streak calculation
+    console.log('Badge calculation:', {
+        newTotalTests,
+        overallScore: results.overallScore,
+        rightEyeScore: results.rightEyeScore,
+        leftEyeScore: results.leftEyeScore,
+        newBadges
+    });
+    
+    // Streak calculation with improved logic
     let newStreak = userEyeData.streak || 0;
     const now = new Date();
     const lastTestDate = userEyeData.lastTest || null;
@@ -867,28 +962,87 @@ function saveTestResults(testType, results) {
     } else {
         const lastDate = lastTestDate instanceof Date ? lastTestDate : new Date(lastTestDate);
         const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) newStreak = (userEyeData.streak || 0) + 1;
-        else if (diffDays > 1) newStreak = 1;
+        
+        if (diffDays === 0) {
+            // Same day test - maintain streak
+            newStreak = userEyeData.streak || 0;
+        } else if (diffDays === 1) {
+            // Consecutive day - increase streak
+            newStreak = (userEyeData.streak || 0) + 1;
+        } else if (diffDays > 1) {
+            // Gap in testing - reset streak
+            newStreak = 1;
+        }
     }
     
-    // Weekly streak badge
+    // Streak-based badges
     if (newStreak >= 7 && !newBadges.includes('week_streak')) newBadges.push('week_streak');
+    if (newStreak >= 30 && !newBadges.includes('month_streak')) newBadges.push('month_streak');
+    if (newStreak >= 100 && !newBadges.includes('century_streak')) newBadges.push('century_streak');
+    
+    // Performance-based badges
+    if (results.overallScore >= 6 && newTotalTests >= 3 && !newBadges.includes('consistent_excellence')) {
+        newBadges.push('consistent_excellence');
+    }
     
     // Update Firestore
     db.collection('eye').doc(currentUser.uid).set({
         testHistory: newTestHistory,
         badges: newBadges,
         lastTest: firebase.firestore.FieldValue.serverTimestamp(),
-        streak: newStreak
+        streak: newStreak,
+        totalTests: newTotalTests,
+        bestScore: newBestScore
     }, { merge: true })
     .then(() => {
+        // Update local data with the new values
         userEyeData.testHistory = newTestHistory;
         userEyeData.badges = newBadges;
         userEyeData.streak = newStreak;
-        userEyeData.lastTest = firebase.firestore.FieldValue.serverTimestamp();
+        userEyeData.totalTests = newTotalTests;
+        userEyeData.bestScore = newBestScore;
+        userEyeData.lastTest = new Date(); // Use current date for local update
+        
+        // Update dashboard
         updateDashboard();
+        
+        // Show achievement notification if new badges were earned
+        const previousBadgeCount = userEyeData.badges ? userEyeData.badges.length : 0;
+        const newBadgesEarned = newBadges.length - previousBadgeCount;
+        if (newBadgesEarned > 0) {
+            showAchievementNotification(newBadgesEarned);
+        }
     })
     .catch(error => {
         console.error("Error saving test results:", error);
+        // Show error notification to user
+        alert("Error saving test results. Please try again.");
     });
+}
+
+// Show achievement notification
+function showAchievementNotification(badgeCount) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-trophy mr-3 text-xl"></i>
+            <div>
+                <h4 class="font-bold">Achievement Unlocked!</h4>
+                <p>You've earned ${badgeCount} new badge${badgeCount > 1 ? 's' : ''}!</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
 }

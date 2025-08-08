@@ -3,9 +3,9 @@
  * 
  * This file handles:
  * - Firebase initialization and authentication
- * - Product fetching from Firestore (with demo fallback)
+ * - Product fetching from Firestore (combined with demo data)
  * - Shopping cart functionality
- * - Stripe checkout integration
+ * - Demo checkout process
  * - UI interactions and modals
  */
 
@@ -94,7 +94,6 @@ const demoProducts = [
 let cart = [];
 let currentFilter = 'all';
 let currentUser = null;
-let stripe = null;
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -102,9 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    
-    // Initialize Stripe
-    stripe = Stripe(stripeConfig.publishableKey);
     
     // Set up auth state listener
     firebase.auth().onAuthStateChanged(user => {
@@ -126,30 +122,47 @@ function init() {
 }
 
 /**
- * Fetches products from Firestore or uses demo data as fallback
+ * Fetches products from Firestore and combines with demo data
  */
 async function fetchProducts() {
+    let allProducts = [...demoProducts]; // Start with demo products
+    
     try {
         const db = firebase.firestore();
         const productsRef = db.collection('products').where('approved', '==', true);
         const snapshot = await productsRef.get();
         
-        if (snapshot.empty) {
-            console.log('No products in Firestore, using demo data');
-            return demoProducts;
+        if (!snapshot.empty) {
+            const firestoreProducts = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data
+                };
+            });
+            
+            // Add Firestore products to the list (avoid duplicates by ID)
+            firestoreProducts.forEach(product => {
+                const existingIndex = allProducts.findIndex(p => p.id === product.id);
+                if (existingIndex >= 0) {
+                    // Replace demo product with Firestore product
+                    allProducts[existingIndex] = product;
+                } else {
+                    // Add new product from Firestore
+                    allProducts.push(product);
+                }
+            });
+            
+            console.log(`Loaded ${firestoreProducts.length} products from Firestore, combined with ${demoProducts.length} demo products`);
+        } else {
+            console.log('No products in Firestore, using demo data only');
         }
-        
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data
-            };
-        });
     } catch (error) {
-        console.error('Error fetching products:', error);
-        return demoProducts;
+        console.error('Error fetching products from Firestore:', error);
+        console.log('Using demo data only due to error');
     }
+    
+    return allProducts;
 }
 
 /**
@@ -461,7 +474,7 @@ function showUserProfile() {
 }
 
 /**
- * Handles the checkout process with Stripe
+ * Handles the checkout process (Demo version)
  */
 async function handleCheckout() {
     if (cart.length === 0) {
@@ -471,52 +484,32 @@ async function handleCheckout() {
 
     const total = parseFloat(cartTotalElement.textContent);
     
-    try {
-        // In a real app, you would create a checkout session on your server
-        // For demo purposes, we'll simulate this with a direct Stripe integration
+    // Show processing message
+    showToast('Processing payment...');
+    
+    // Simulate payment processing delay
+    setTimeout(() => {
+        // Clear the cart
+        cart = [];
+        updateCart();
+        updateCartCount();
         
-        // Create line items for Stripe
-        const lineItems = cart.map(item => ({
-            price_data: {
-                currency: 'usd',
-                product_data: {
-                    name: item.name,
-                    description: item.description,
-                    images: [item.image],
-                },
-                unit_amount: Math.round(item.price * 100),
-            },
-            quantity: item.quantity,
-        }));
+        // Close the cart modal
+        cartModal.classList.remove('show');
         
-        // Create the checkout session (in a real app, this would be a server-side call)
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: lineItems,
-            mode: 'payment',
-            success_url: `${window.location.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${window.location.origin}/cancel.html`,
-            customer_email: currentUser.email,
-        });
+        // Show success message
+        showToast('Payment successful! Your order has been placed.', 'success');
         
-        // Redirect to Stripe checkout
-        const result = await stripe.redirectToCheckout({ sessionId: session.id });
-        
-        if (result.error) {
-            showToast(result.error.message);
-        }
-    } catch (error) {
-        console.error('Checkout error:', error);
-        showToast('Error processing payment. Please try again.');
-    }
+        console.log('Demo checkout completed successfully');
+    }, 2000);
 }
 
 /**
  * Shows toast notification
  */
-function showToast(message) {
+function showToast(message, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = `toast toast-${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
     
