@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareCore - Digital Eye Tests</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%236366F1'/><circle cx='50' cy='50' r='25' fill='white'/><circle cx='50' cy='50' r='15' fill='%236366F1'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- AOS Animation Library -->
@@ -181,7 +184,47 @@
                     </div>
                 </div>
                 <div class="md:w-1/2" data-aos="fade-left">
-                    <img src="https://via.placeholder.com/600x400" alt="Eye Test Illustration" class="rounded-lg shadow-xl">
+                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg shadow-xl p-8">
+                        <svg class="w-full h-auto" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Eye Chart Background -->
+                            <rect x="50" y="50" width="300" height="200" rx="10" fill="white" stroke="#6366F1" stroke-width="2"/>
+                            
+                            <!-- Eye Chart Lines -->
+                            <text x="200" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1F2937">E F P T O Z</text>
+                            <text x="200" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#374151">L D C A B H</text>
+                            <text x="200" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#4B5563">K M N R S U</text>
+                            <text x="200" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#6B7280">V W X Y Z</text>
+                            <text x="200" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#9CA3AF">A B C D E</text>
+                            <text x="200" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#D1D5DB">F G H I J</text>
+                            
+                            <!-- Decorative Elements -->
+                            <circle cx="80" cy="80" r="15" fill="#6366F1" opacity="0.1"/>
+                            <circle cx="320" cy="120" r="12" fill="#3B82F6" opacity="0.1"/>
+                            <circle cx="90" cy="220" r="10" fill="#8B5CF6" opacity="0.1"/>
+                            
+                            <!-- Eye Icon -->
+                            <g transform="translate(320, 60)">
+                                <circle cx="0" cy="0" r="20" fill="#6366F1" opacity="0.1"/>
+                                <circle cx="0" cy="0" r="15" fill="#6366F1" opacity="0.2"/>
+                                <circle cx="0" cy="0" r="10" fill="#6366F1" opacity="0.3"/>
+                                <circle cx="0" cy="0" r="5" fill="#6366F1"/>
+                            </g>
+                            
+                            <!-- Glasses Icon -->
+                            <g transform="translate(60, 240)">
+                                <path d="M0 0 Q10 -5 20 0 Q30 -5 40 0 Q35 10 30 15 Q25 10 20 15 Q15 10 10 15 Q5 10 0 15 Z" fill="#6366F1" opacity="0.3"/>
+                                <circle cx="10" cy="8" r="8" fill="none" stroke="#6366F1" stroke-width="2"/>
+                                <circle cx="30" cy="8" r="8" fill="none" stroke="#6366F1" stroke-width="2"/>
+                                <line x1="18" y1="8" x2="22" y2="8" stroke="#6366F1" stroke-width="2"/>
+                            </g>
+                            
+                            <!-- Medical Cross -->
+                            <g transform="translate(350, 220)">
+                                <rect x="-3" y="-8" width="6" height="16" fill="#EF4444" opacity="0.7"/>
+                                <rect x="-8" y="-3" width="16" height="6" fill="#EF4444" opacity="0.7"/>
+                            </g>
+                        </svg>
+                    </div>
                 </div>
             </div>
         </div>
@@ -231,10 +274,10 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-green-600">
-                                <i class="fas fa-clock mr-1"></i> 3-5 mins
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
                             </span>
-                            <button onclick="startTest('color-vision')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                                Start Test
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
                             </button>
                         </div>
                     </div>
@@ -252,10 +295,10 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-blue-600">
-                                <i class="fas fa-clock mr-1"></i> 4-6 mins
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
                             </span>
-                            <button onclick="startTest('contrast')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                                Start Test
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
                             </button>
                         </div>
                     </div>
@@ -273,10 +316,10 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-purple-600">
-                                <i class="fas fa-clock mr-1"></i> 2-4 mins
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
                             </span>
-                            <button onclick="startTest('astigmatism')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                                Start Test
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
                             </button>
                         </div>
                     </div>
@@ -294,10 +337,10 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-yellow-600">
-                                <i class="fas fa-clock mr-1"></i> 3-5 mins
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
                             </span>
-                            <button onclick="startTest('near-vision')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                                Start Test
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
                             </button>
                         </div>
                     </div>
@@ -315,10 +358,10 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-red-600">
-                                <i class="fas fa-clock mr-1"></i> 15-20 mins
+                                <i class="fas fa-clock mr-1"></i> Coming Soon
                             </span>
-                            <button onclick="startTest('complete')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                                Start Exam
+                            <button class="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                In Development
                             </button>
                         </div>
                     </div>

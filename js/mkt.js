@@ -115,10 +115,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize the app
 function init() {
+    // Restore cart from localStorage
+    try {
+        const savedCart = localStorage.getItem('carecore_cart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+    } catch (_) {}
+
     renderProducts();
     setupEventListeners();
     showUserProfile();
     updateCartCount();
+
+    // If coming back from cancel page and a flag is set, open cart
+    try {
+        const shouldShowCart = localStorage.getItem('carecore_show_cart');
+        if (shouldShowCart === 'true') {
+            localStorage.removeItem('carecore_show_cart');
+            showCartModal();
+        }
+    } catch (_) {}
 }
 
 /**
@@ -268,6 +285,20 @@ function setupEventListeners() {
     // Checkout button
     checkoutBtn.addEventListener('click', handleCheckout);
 
+    // Cancel order button
+    const cancelOrderBtn = document.getElementById('cancel-order-btn');
+    if (cancelOrderBtn) {
+        cancelOrderBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Preserve cart and set flag to show it when returning
+            try {
+                localStorage.setItem('carecore_cart', JSON.stringify(cart));
+                localStorage.setItem('carecore_show_cart', 'true');
+            } catch (_) {}
+            window.location.href = 'cancel.html';
+        });
+    }
+
     // Search functionality
     const searchInput = document.querySelector('.search-bar input');
     const searchButton = document.querySelector('.search-bar button');
@@ -396,6 +427,11 @@ function updateCart() {
     });
     
     cartTotalElement.textContent = total.toFixed(2);
+
+    // Persist cart to localStorage
+    try {
+        localStorage.setItem('carecore_cart', JSON.stringify(cart));
+    } catch (_) {}
     
     // Add event listeners for quantity buttons
     document.querySelectorAll('.quantity-btn').forEach(btn => {
@@ -483,25 +519,22 @@ async function handleCheckout() {
     }
 
     const total = parseFloat(cartTotalElement.textContent);
-    
+
     // Show processing message
-    showToast('Processing payment...');
-    
-    // Simulate payment processing delay
-    setTimeout(() => {
-        // Clear the cart
-        cart = [];
-        updateCart();
-        updateCartCount();
-        
-        // Close the cart modal
-        cartModal.classList.remove('show');
-        
-        // Show success message
-        showToast('Payment successful! Your order has been placed.', 'success');
-        
-        console.log('Demo checkout completed successfully');
-    }, 2000);
+    showToast('Redirecting to checkout...');
+
+    // Persist cart for success page to clear it
+    try {
+        localStorage.setItem('carecore_cart', JSON.stringify(cart));
+    } catch (_) {}
+
+    // Simulate redirect to payment provider with success/cancel URLs
+    const sessionId = Math.random().toString(36).slice(2);
+    const successUrl = `success.html?session_id=${encodeURIComponent(sessionId)}`;
+    const cancelUrl = `cancel.html`;
+
+    // For demo flow, immediately go to success
+    window.location.href = successUrl;
 }
 
 /**

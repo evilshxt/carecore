@@ -118,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
             strings: [
                 `Welcome to CareCore, ${username}`,
                 `Hello ${username}!`,
-                `Are you reeady to feel better ${username}?`,
-                `Enjoy you day ${username}!`,
+                `Are you ready to feel better ${username}?`,
+                `Enjoy your day ${username}!`,
                 `Don't be shy to reach out.`
             ],
             typeSpeed: 50,

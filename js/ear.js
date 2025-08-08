@@ -1,4 +1,4 @@
-// ear.js - Firebase integration for CareCore Hearing Tests (Fully Fixed Version)
+// ear.js - Enhanced with localStorage for demo purposes
 
 // Initialize Firebase (configuration comes from keys.js)
 const app = firebase.initializeApp(firebaseConfig);
@@ -163,28 +163,62 @@ function initializeApp() {
     loadUserHearingData();
 }
 
-// At the top of ear.js, replace the loadUserHearingData function:
+// Load user hearing data from localStorage
 function loadUserHearingData() {
-    db.collection('ear').doc(currentUser.uid).get()
-        .then(doc => {
-            if (doc.exists) {
-                userHearingData = doc.data();
-                updateDashboard();
-            } else {
-                // Create initial hearing data structure if it doesn't exist
-                userHearingData = {
-                    testHistory: [],
-                    badges: [],
-                    lastTest: null,
-                    streak: 0
-                };
-                db.collection('ear').doc(currentUser.uid).set(userHearingData);
-                updateDashboard();
+    console.log('Loading user hearing data from localStorage');
+    
+    // For demo purposes, use localStorage instead of Firestore
+    const storedData = localStorage.getItem('hearingData');
+    
+    if (storedData) {
+        try {
+            userHearingData = JSON.parse(storedData);
+            console.log('Loaded existing hearing data:', userHearingData);
+            
+            // Convert date strings back to Date objects
+            if (userHearingData.testHistory) {
+                userHearingData.testHistory = userHearingData.testHistory.map(test => ({
+                    ...test,
+                    date: new Date(test.date),
+                    timestamp: new Date(test.timestamp || test.date)
+                }));
             }
-        })
-        .catch(error => {
-            console.error("Error loading user hearing data:", error);
-        });
+            if (userHearingData.lastTest) {
+                userHearingData.lastTest = new Date(userHearingData.lastTest);
+            }
+        } catch (error) {
+            console.error('Error parsing stored hearing data:', error);
+            userHearingData = getDefaultHearingData();
+        }
+    } else {
+        console.log('No existing hearing data found, creating new data');
+        userHearingData = getDefaultHearingData();
+        saveHearingDataToStorage();
+    }
+    
+    updateDashboard();
+}
+
+// Get default hearing data structure
+function getDefaultHearingData() {
+    return {
+        testHistory: [],
+        badges: [],
+        lastTest: null,
+        streak: 0,
+        totalTests: 0,
+        bestScore: 0
+    };
+}
+
+// Save hearing data to localStorage
+function saveHearingDataToStorage() {
+    try {
+        localStorage.setItem('hearingData', JSON.stringify(userHearingData));
+        console.log('Hearing data saved to localStorage:', userHearingData);
+    } catch (error) {
+        console.error('Error saving hearing data to localStorage:', error);
+    }
 }
 
 // Update dashboard with user data
@@ -300,8 +334,8 @@ function updateRecentTests() {
     let html = '';
     
     recentTests.forEach(test => {
-        const date = test.date.toDate();
-        const dateStr = date.toLocaleDateString('en-US', { 
+        const dateObj = test.date && typeof test.date.toDate === 'function' ? test.date.toDate() : new Date(test.date);
+        const dateStr = dateObj.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric',
             year: 'numeric'
@@ -663,7 +697,8 @@ function initVolumeSensitivityTest() {
     
     // Generate test words
     testState.questions = [];
-    for (let i = 0; i < 3; i++) {
+    testState.answers = []; // Initialize answers array
+    for (let i = 0; i < 5; i++) { // Increased to 5 words for better testing
         const randomIndex = Math.floor(Math.random() * testWords.length);
         testState.questions.push(testWords[randomIndex]);
     }
@@ -671,6 +706,8 @@ function initVolumeSensitivityTest() {
     // Start with first word at full volume
     testState.currentStep = 0;
     testState.volumeLevel = 1.0;
+    // Track the lowest volume at which the word was still heard
+    testState.minHeardVolume = null;
     updateVolumeIndicator();
     
     const playBtn = document.getElementById('playVolumeTest');
@@ -697,8 +734,15 @@ function playCurrentVolumeTest() {
 }
 
 function heardCurrentWord() {
-    // Move to next volume level (decrease by 0.2)
-    testState.volumeLevel = Math.max(0, testState.volumeLevel - 0.2);
+    // Record the minimal volume at which the current word is heard
+    if (testState.minHeardVolume === null) {
+        testState.minHeardVolume = testState.volumeLevel;
+    } else {
+        testState.minHeardVolume = Math.min(testState.minHeardVolume, testState.volumeLevel);
+    }
+    
+    // Move to next volume level (decrease by 0.1 for finer control)
+    testState.volumeLevel = Math.max(0.1, testState.volumeLevel - 0.1);
     updateVolumeIndicator();
     
     // Play the word again at new volume
@@ -707,15 +751,22 @@ function heardCurrentWord() {
 
 function notHeardCurrentWord() {
     // Record the threshold volume for this word
+    // Use the lowest volume at which the user could still hear the word
+    // If they never heard it, use the current volume level as threshold
+    const threshold = testState.minHeardVolume !== null ? testState.minHeardVolume : testState.volumeLevel;
+    
     testState.answers.push({
         word: testState.questions[testState.currentStep],
-        threshold: testState.volumeLevel + 0.2 // Last volume where it was heard
+        threshold: threshold
     });
+    
+    console.log(`Word "${testState.questions[testState.currentStep]}" threshold: ${threshold}`);
     
     // Move to next word or finish test
     testState.currentStep++;
     if (testState.currentStep < testState.questions.length) {
         testState.volumeLevel = 1.0;
+        testState.minHeardVolume = null;
         updateVolumeIndicator();
         playCurrentVolumeTest();
     } else {
@@ -737,21 +788,35 @@ function updateVolumeIndicator() {
 }
 
 function finishVolumeSensitivityTest() {
-    // Calculate average threshold
+    console.log('Volume sensitivity test answers:', testState.answers);
+    
+    // Calculate average threshold (lower is better for hearing sensitivity)
     const avgThreshold = testState.answers.reduce((sum, answer) => sum + answer.threshold, 0) / testState.answers.length;
-    const score = Math.round(avgThreshold * 100);
+    
+    // Convert threshold to score (lower threshold = higher score)
+    // Threshold of 0.1 = 100% score, Threshold of 1.0 = 0% score
+    const score = Math.round((1 - avgThreshold) * 100);
+    
+    console.log('Volume sensitivity calculation:', {
+        avgThreshold,
+        score,
+        answers: testState.answers
+    });
     
     // Show results
     showTestResults('Volume Sensitivity Test', score, `
         Your average hearing threshold is ${Math.round(avgThreshold * 100)}% volume.
-        ${score >= 60 ? 'This is within the normal range.' : 'You may want to consult an audiologist for further evaluation.'}
+        ${score >= 80 ? 'Excellent hearing sensitivity!' : 
+          score >= 60 ? 'Good hearing sensitivity.' : 
+          score >= 40 ? 'Fair hearing sensitivity.' :
+          'You may want to consult an audiologist for further evaluation.'}
     `);
     
     // Save results
     saveTestResults('volume-sensitivity', {
         score: score,
         threshold: avgThreshold,
-        date: firebase.firestore.FieldValue.serverTimestamp()
+        answers: testState.answers
     });
 }
 
@@ -975,20 +1040,35 @@ function finishMultipleChoiceTest() {
 }
 
 function finishVolumeSensitivityTest() {
-    // Calculate average threshold
+    console.log('Volume sensitivity test answers:', testState.answers);
+    
+    // Calculate average threshold (lower is better for hearing sensitivity)
     const avgThreshold = testState.answers.reduce((sum, answer) => sum + answer.threshold, 0) / testState.answers.length;
-    const score = Math.round(avgThreshold * 100);
+    
+    // Convert threshold to score (lower threshold = higher score)
+    // Threshold of 0.1 = 100% score, Threshold of 1.0 = 0% score
+    const score = Math.round((1 - avgThreshold) * 100);
+    
+    console.log('Volume sensitivity calculation:', {
+        avgThreshold,
+        score,
+        answers: testState.answers
+    });
     
     // Show results
     showTestResults('Volume Sensitivity Test', score, `
         Your average hearing threshold is ${Math.round(avgThreshold * 100)}% volume.
-        ${score >= 60 ? 'This is within the normal range.' : 'You may want to consult an audiologist for further evaluation.'}
+        ${score >= 80 ? 'Excellent hearing sensitivity!' : 
+          score >= 60 ? 'Good hearing sensitivity.' : 
+          score >= 40 ? 'Fair hearing sensitivity.' :
+          'You may want to consult an audiologist for further evaluation.'}
     `);
     
-    // Save results with proper timestamp
+    // Save results
     saveTestResults('volume-sensitivity', {
         score: score,
-        threshold: avgThreshold
+        threshold: avgThreshold,
+        answers: testState.answers
     });
 }
 
@@ -1035,88 +1115,166 @@ function showTestResults(testType, score, recommendation) {
 
 // Fix 2: Update the saveTestResults function to handle Firebase timestamp correctly
 function saveTestResults(testType, results) {
+    console.log('Saving test results:', { testType, results });
+    
     // Create test record with current timestamp
     const testRecord = {
         testType: testType,
         ...results,
-        // Replace the serverTimestamp in results with actual timestamp
-        date: firebase.firestore.Timestamp.now()
+        date: new Date(),
+        timestamp: new Date()
     };
     
     // Update user data
     const newTestHistory = [...userHearingData.testHistory, testRecord];
     const newBadges = [...userHearingData.badges];
+    const newTotalTests = (userHearingData.totalTests || 0) + 1;
+    const newBestScore = Math.max(userHearingData.bestScore || 0, results.score);
     
-    // Check for new badges
+    // Enhanced badge logic
     if (!newBadges.includes('first_test')) {
         newBadges.push('first_test');
     }
     
-    if (newTestHistory.length >= 3 && !newBadges.includes('three_tests')) {
+    if (newTotalTests >= 3 && !newBadges.includes('three_tests')) {
         newBadges.push('three_tests');
     }
     
-    // Calculate streak (simplified - checks if last test was yesterday)
-    let newStreak = userHearingData.streak;
+    if (newTotalTests >= 5 && !newBadges.includes('five_tests')) {
+        newBadges.push('five_tests');
+    }
+    
+    if (results.score >= 90 && !newBadges.includes('excellent_hearing')) {
+        newBadges.push('excellent_hearing');
+    }
+    
+    if (results.score >= 70 && !newBadges.includes('good_hearing')) {
+        newBadges.push('good_hearing');
+    }
+    
+    // Calculate streak
+    let newStreak = userHearingData.streak || 0;
     const now = new Date();
-    const lastTestDate = userHearingData.lastTest ? userHearingData.lastTest.toDate() : null;
+    const lastTestDate = userHearingData.lastTest || null;
     
     if (!lastTestDate) {
         newStreak = 1;
     } else {
-        const diffDays = Math.floor((now - lastTestDate) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-            newStreak = userHearingData.streak + 1;
+        const lastDate = lastTestDate instanceof Date ? lastTestDate : new Date(lastTestDate);
+        const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+            // Same day test - maintain streak
+            newStreak = userHearingData.streak || 0;
+        } else if (diffDays === 1) {
+            // Consecutive day - increase streak
+            newStreak = (userHearingData.streak || 0) + 1;
         } else if (diffDays > 1) {
-            newStreak = 1; // Reset streak if more than 1 day gap
+            // Gap in testing - reset streak
+            newStreak = 1;
         }
     }
     
-    // Weekly streak badge
+    // Streak-based badges
     if (newStreak >= 7 && !newBadges.includes('week_streak')) {
         newBadges.push('week_streak');
     }
     
-    // Update Firestore with proper field updates
-    db.collection('ear').doc(currentUser.uid).update({
-        testHistory: firebase.firestore.FieldValue.arrayUnion(testRecord),
-        badges: newBadges,
-        lastTest: firebase.firestore.FieldValue.serverTimestamp(),
-        streak: newStreak
-    })
-    .then(() => {
-        // Update local data
-        userHearingData.testHistory = newTestHistory;
-        userHearingData.badges = newBadges;
-        userHearingData.streak = newStreak;
-        userHearingData.lastTest = new Date(); // Use current date for local update
-        
-        // Update dashboard
-        updateDashboard();
-    })
-    .catch(error => {
-        console.error("Error saving test results:", error);
-        alert("Error saving test results. Please try again.");
-    });
-}
-
-// Helper function to calculate string similarity
-function calculateSimilarity(str1, str2) {
-    const set1 = new Set(str1.toLowerCase().split(/\s+/));
-    const set2 = new Set(str2.toLowerCase().split(/\s+/));
+    // Update local data
+    userHearingData.testHistory = newTestHistory;
+    userHearingData.badges = newBadges;
+    userHearingData.streak = newStreak;
+    userHearingData.totalTests = newTotalTests;
+    userHearingData.bestScore = newBestScore;
+    userHearingData.lastTest = new Date();
     
-    const intersection = new Set([...set1].filter(x => set2.has(x)));
-    const union = new Set([...set1, ...set2]);
+    // Save to localStorage
+    saveHearingDataToStorage();
     
-    return intersection.size / union.size;
-}
-
-// Helper function to shuffle array
-function shuffleArray(array) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    // Update dashboard
+    updateDashboard();
+    
+    // Show achievement notification if new badges were earned
+    const previousBadgeCount = userHearingData.badges ? userHearingData.badges.length : 0;
+    const newBadgesEarned = newBadges.length - previousBadgeCount;
+    if (newBadgesEarned > 0) {
+        showAchievementNotification(newBadgesEarned);
     }
-    return newArray;
+}
+
+// Show achievement notification
+function showAchievementNotification(badgeCount) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-trophy mr-3 text-xl"></i>
+            <div>
+                <h4 class="font-bold">Achievement Unlocked!</h4>
+                <p>You've earned ${badgeCount} new badge${badgeCount > 1 ? 's' : ''}!</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// Utility function to calculate similarity between strings
+function calculateSimilarity(str1, str2) {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
+
+// Utility function to shuffle array
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// Levenshtein distance for string similarity
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
 }

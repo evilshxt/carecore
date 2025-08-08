@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ease: "power2.out"
     });
     
-    gsap.from('.hero button', {
+    gsap.from('.hero a', {
         duration: 1,
         y: -20,
         opacity: 0,

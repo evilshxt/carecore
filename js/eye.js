@@ -1,6 +1,6 @@
-// eye.js - Enhanced with all test types and fixed functionality
+// eye.js - Enhanced with localStorage for demo purposes
 
-// Initialize Firebase
+// Initialize Firebase (configuration comes from keys.js)
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -44,14 +44,12 @@ function generateRandomSnellenChart() {
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize animations
-    if (typeof AOS !== 'undefined') {
-        AOS.init({
-            duration: 800,
-            easing: 'ease-in-out',
-            once: true
-        });
-    }
+    // Initialize AOS animation library
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: true
+    });
 
     // Check auth state
     auth.onAuthStateChanged(user => {
@@ -59,20 +57,16 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUser = user;
             initializeApp();
         } else {
+            // Redirect to login if not authenticated
             window.location.href = 'login.html';
         }
     });
 
     // Mobile menu toggle
-    const mobileMenuButton = document.getElementById('mobileMenuButton');
-    if (mobileMenuButton) {
-        mobileMenuButton.addEventListener('click', function() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            if (mobileMenu) {
-                mobileMenu.classList.toggle('hidden');
-            }
-        });
-    }
+    document.getElementById('mobileMenuButton')?.addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenu.classList.toggle('hidden');
+    });
 
     // FAQ toggle functionality
     document.querySelectorAll('.faq-toggle').forEach(button => {
@@ -81,154 +75,84 @@ document.addEventListener('DOMContentLoaded', function() {
             const content = faqItem.querySelector('.faq-content');
             const icon = button.querySelector('i');
             
-            if (content) content.classList.toggle('hidden');
-            if (icon) {
-                icon.classList.toggle('transform');
-                icon.classList.toggle('rotate-180');
-            }
+            content.classList.toggle('hidden');
+            icon.classList.toggle('transform');
+            icon.classList.toggle('rotate-180');
         });
     });
 
-    // Replace placeholder image
-    const heroImage = document.querySelector('.hero-gradient img');
-    if (heroImage) {
-        heroImage.src = 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&h=400&q=80';
-    }
-
-    // Initialize test buttons
-    setupTestButtons();
+    // Close modal buttons
+    document.getElementById('closeTestModal')?.addEventListener('click', closeTestModal);
+    document.getElementById('cancelTest')?.addEventListener('click', closeTestModal);
 });
 
-// Initialize the app for authenticated users
 function initializeApp() {
-    const userProfileSection = document.getElementById('userProfileSection');
-    const dashboardContent = document.getElementById('dashboardContent');
-    const userDisplayName = document.getElementById('userDisplayName');
-    
-    if (userProfileSection) userProfileSection.classList.remove('hidden');
-    if (dashboardContent) dashboardContent.classList.remove('hidden');
-    if (userDisplayName) {
-        userDisplayName.textContent = currentUser.displayName || currentUser.email.split('@')[0];
-    }
-    
+    console.log('Initializing eye app for user:', currentUser.uid);
     loadUserEyeData();
+    setupTestButtons();
 }
 
-// Set up test button event listeners
 function setupTestButtons() {
-    // Start test buttons - look for buttons with data-test-type or specific button classes
-    const testButtons = document.querySelectorAll('[data-test-type], .test-button, button[onclick*="startTest"]');
-    testButtons.forEach(button => {
-        // Remove inline onclick to prevent conflicts
-        button.removeAttribute('onclick');
-        
-        // Add proper event listener
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Get test type from data attribute or button text
-            let testType = this.getAttribute('data-test-type');
-            if (!testType) {
-                const buttonText = this.textContent.toLowerCase();
-                if (buttonText.includes('visual acuity')) testType = 'visual-acuity';
-                else if (buttonText.includes('color vision')) testType = 'color-vision';
-                else if (buttonText.includes('contrast')) testType = 'contrast';
-                else if (buttonText.includes('astigmatism')) testType = 'astigmatism';
-                else if (buttonText.includes('near vision')) testType = 'near-vision';
-                else if (buttonText.includes('complete')) testType = 'complete';
-                else testType = 'visual-acuity'; // default
-            }
-            
-            console.log('Starting test:', testType); // Debug log
+    // Test type buttons
+    document.querySelectorAll('[data-test-type]').forEach(button => {
+        button.addEventListener('click', function() {
+            const testType = this.getAttribute('data-test-type');
             startTest(testType);
         });
     });
-
-    // Close modal button
-    const closeTestModalBtn = document.getElementById('closeTestModal');
-    if (closeTestModalBtn) {
-        closeTestModalBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeTestModal();
-        });
-    }
-
-    // Screen calibration slider
-    const calibrationSlider = document.getElementById('calibrationSlider');
-    if (calibrationSlider) {
-        calibrationSlider.addEventListener('input', function(e) {
-            const value = e.target.value;
-            const calibrationBox = document.getElementById('cardSizeCalibration');
-            if (calibrationBox) {
-                calibrationBox.style.width = `${85.6 * (value / 100)}mm`;
-            }
-        });
-    }
-
-    // Start test button in calibration
-    const startTestButton = document.getElementById('startTestButton');
-    if (startTestButton) {
-        startTestButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            proceedToTest();
-        });
-    }
 }
 
-// Load user eye data from Firestore
+// Load user eye data from localStorage
 function loadUserEyeData() {
     console.log('Loading user eye data for:', currentUser.uid);
-    db.collection('eye').doc(currentUser.uid).get()
-        .then(doc => {
-            if (doc.exists) {
-                userEyeData = doc.data();
-                console.log('Loaded existing eye data:', userEyeData);
-                // Convert Firestore timestamps to JavaScript Date objects
-                if (userEyeData.testHistory) {
-                    userEyeData.testHistory = userEyeData.testHistory.map(test => ({
-                        ...test,
-                        date: test.date && test.date.toDate ? test.date.toDate() : new Date(test.date || Date.now()),
-                        timestamp: test.timestamp && test.timestamp.toDate ? test.timestamp.toDate() : new Date(test.timestamp || Date.now())
-                    }));
-                }
-                if (userEyeData.lastTest && userEyeData.lastTest.toDate) {
-                    userEyeData.lastTest = userEyeData.lastTest.toDate();
-                }
-                updateDashboard();
-            } else {
-                console.log('No existing eye data found, creating new data');
-                userEyeData = {
-                    testHistory: [],
-                    badges: [],
-                    lastTest: null,
-                    streak: 0,
-                    totalTests: 0,
-                    bestScore: 0
-                };
-                db.collection('eye').doc(currentUser.uid).set(userEyeData)
-                    .then(() => {
-                        console.log('Created new eye data document');
-                        updateDashboard();
-                    })
-                    .catch(error => {
-                        console.error("Error creating new eye data:", error);
-                        updateDashboard();
-                    });
+    
+    const storageKey = `eyeData_${currentUser.uid}`;
+    const storedData = localStorage.getItem(storageKey);
+    
+    if (storedData) {
+        try {
+            userEyeData = JSON.parse(storedData);
+            console.log('Loaded existing eye data:', userEyeData);
+            
+            // Convert date strings back to Date objects
+            if (userEyeData.testHistory) {
+                userEyeData.testHistory = userEyeData.testHistory.map(test => ({
+                    ...test,
+                    date: new Date(test.date),
+                    timestamp: new Date(test.timestamp || test.date)
+                }));
             }
-        })
-        .catch(error => {
-            console.error("Error loading user eye data:", error);
-            // Initialize with default data if there's an error
-            userEyeData = {
-                testHistory: [],
-                badges: [],
-                lastTest: null,
-                streak: 0,
-                totalTests: 0,
-                bestScore: 0
-            };
-            updateDashboard();
-        });
+            if (userEyeData.lastTest) {
+                userEyeData.lastTest = new Date(userEyeData.lastTest);
+            }
+        } catch (error) {
+            console.error('Error parsing stored eye data:', error);
+            userEyeData = getDefaultEyeData();
+        }
+    } else {
+        console.log('No existing eye data found, creating new data');
+        userEyeData = getDefaultEyeData();
+        saveEyeDataToStorage();
+    }
+    
+    updateDashboard();
+}
+
+function getDefaultEyeData() {
+    return {
+        testHistory: [],
+        badges: [],
+        lastTest: null,
+        streak: 0,
+        totalTests: 0,
+        bestScore: 0
+    };
+}
+
+function saveEyeDataToStorage() {
+    const storageKey = `eyeData_${currentUser.uid}`;
+    localStorage.setItem(storageKey, JSON.stringify(userEyeData));
+    console.log('Saved eye data to localStorage:', userEyeData);
 }
 
 // Update dashboard with user data
@@ -357,20 +281,42 @@ function updateRecentTests() {
                 testColor = 'indigo'; 
                 score = test.result || `${test.overallScore}/8`;
                 break;
-            case 'color-vision': testName = 'Color Vision Test'; testColor = 'green'; break;
-            case 'contrast': testName = 'Contrast Sensitivity'; testColor = 'blue'; break;
-            case 'astigmatism': testName = 'Astigmatism Test'; testColor = 'purple'; break;
-            case 'near-vision': testName = 'Near Vision Test'; testColor = 'yellow'; break;
-            default: testName = 'Eye Test'; testColor = 'gray';
+            case 'color-vision': 
+                testName = 'Color Vision Test'; 
+                testColor = 'purple'; 
+                score = `${test.score || 0}%`;
+                break;
+            case 'contrast': 
+                testName = 'Contrast Sensitivity'; 
+                testColor = 'blue'; 
+                score = `${test.score || 0}%`;
+                break;
+            case 'astigmatism': 
+                testName = 'Astigmatism Test'; 
+                testColor = 'green'; 
+                score = test.result || 'Normal';
+                break;
+            case 'near-vision': 
+                testName = 'Near Vision Test'; 
+                testColor = 'yellow'; 
+                score = `${test.score || 0}%`;
+                break;
+            default: 
+                testName = 'Eye Test'; 
+                testColor = 'gray'; 
+                score = 'Completed';
         }
         
         html += `
-            <div class="border-b border-gray-200 pb-4">
-                <div class="flex justify-between items-center mb-1">
-                    <h4 class="font-medium text-gray-800">${testName}</h4>
-                    <span class="text-sm text-${testColor}-600">${score}</span>
+            <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                <div class="flex items-center">
+                    <div class="w-3 h-3 bg-${testColor}-500 rounded-full mr-3"></div>
+                    <div>
+                        <p class="font-medium text-gray-800">${testName}</p>
+                        <p class="text-sm text-gray-500">${dateStr}</p>
+                    </div>
                 </div>
-                <p class="text-sm text-gray-500">Completed: ${dateStr}</p>
+                <span class="text-sm font-semibold text-${testColor}-600">${score}</span>
             </div>
         `;
     });
@@ -482,357 +428,189 @@ function updateNextTestRecommendation() {
     `;
 }
 
-// Test modal functionality
-let currentTest = null;
-let currentSnellenRows = [];
-
 function startTest(testType) {
-    console.log('startTest called with:', testType);
     currentTest = testType;
-    currentRow = 0;
-    currentEye = 'right';
-    testResults = {
-        right: { smallestLine: 0, correctAnswers: [] },
-        left: { smallestLine: 0, correctAnswers: [] }
-    };
     
-    // Generate new random Snellen chart for each test
-    currentSnellenRows = generateRandomSnellenChart();
-    
+    const modal = document.getElementById('testModal');
     const modalTitle = document.getElementById('testModalTitle');
-    if (modalTitle) {
-        switch(testType) {
-            case 'visual-acuity': 
-                modalTitle.textContent = 'Visual Acuity Test'; 
-                setupVisualAcuityTest();
-                break;
-            case 'color-vision': 
-                modalTitle.textContent = 'Color Vision Test';
-                showInDevelopment();
-                break;
-            case 'contrast': 
-                modalTitle.textContent = 'Contrast Sensitivity Test';
-                showInDevelopment();
-                break;
-            case 'astigmatism': 
-                modalTitle.textContent = 'Astigmatism Test';
-                showInDevelopment();
-                break;
-            case 'near-vision': 
-                modalTitle.textContent = 'Near Vision Test';
-                showInDevelopment();
-                break;
-            case 'complete': 
-                modalTitle.textContent = 'Complete Eye Exam';
-                showInDevelopment();
-                break;
-        }
+    const modalContent = document.getElementById('testModalContent');
+    
+    if (!modal || !modalTitle || !modalContent) return;
+    
+    // Set modal title
+    switch(testType) {
+        case 'visual-acuity': modalTitle.textContent = 'Visual Acuity Test'; break;
+        case 'color-vision': modalTitle.textContent = 'Color Vision Test'; break;
+        case 'contrast': modalTitle.textContent = 'Contrast Sensitivity Test'; break;
+        case 'astigmatism': modalTitle.textContent = 'Astigmatism Test'; break;
+        case 'near-vision': modalTitle.textContent = 'Near Vision Test'; break;
+        default: modalTitle.textContent = 'Eye Test';
     }
     
-    const calibrationStep = document.getElementById('calibrationStep');
-    const testContent = document.getElementById('testContent');
-    const testModal = document.getElementById('testModal');
+    // Show appropriate content
+    modalContent.innerHTML = `
+        <div class="text-center py-8">
+            <div class="mb-6">
+                <i class="fas fa-eye text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">${modalTitle.textContent}</h3>
+                <p class="text-gray-600">This test will help assess your vision health.</p>
+            </div>
+            <div class="space-y-4">
+                <button onclick="proceedToTest()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    Start Test
+                </button>
+                <button onclick="closeTestModal()" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
     
-    // Check if mobile device and skip calibration
-    if (window.innerWidth <= 768) {
-        if (calibrationStep) calibrationStep.classList.add('hidden');
-        if (testContent) testContent.classList.remove('hidden');
-        proceedToTest();
-    } else {
-        if (calibrationStep) calibrationStep.classList.remove('hidden');
-        if (testContent) testContent.classList.add('hidden');
-    }
-    
-    if (testModal) testModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    modal.classList.remove('hidden');
 }
 
 function proceedToTest() {
-    const calibrationStep = document.getElementById('calibrationStep');
-    const testContent = document.getElementById('testContent');
-    const loading = document.getElementById('loading');
-    
-    if (calibrationStep) calibrationStep.classList.add('hidden');
-    if (testContent) testContent.classList.remove('hidden');
-    if (loading) loading.classList.remove('hidden');
-    
-    setTimeout(() => {
-        if (loading) loading.classList.add('hidden');
-        const visualAcuityContent = document.getElementById('visual-acuity-content');
-        if (visualAcuityContent) {
-            visualAcuityContent.classList.remove('hidden');
-            const currentEyeElement = document.getElementById('currentEye');
-            if (currentEyeElement) currentEyeElement.textContent = 'Right';
-            startEyeTest();
-        }
-    }, 1000);
+    switch(currentTest) {
+        case 'visual-acuity':
+            setupVisualAcuityTest();
+            break;
+        case 'color-vision':
+        case 'contrast':
+        case 'astigmatism':
+        case 'near-vision':
+            showInDevelopment();
+            break;
+        default:
+            showInDevelopment();
+    }
 }
 
 function showInDevelopment() {
-    const calibrationStep = document.getElementById('calibrationStep');
-    const testContent = document.getElementById('testContent');
-    const loading = document.getElementById('loading');
-    
-    if (calibrationStep) calibrationStep.classList.add('hidden');
-    if (testContent) testContent.classList.remove('hidden');
-    if (loading) loading.classList.add('hidden');
-    
-    const content = `
-        <div class="text-center p-8">
-            <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-tools text-yellow-600 text-3xl"></i>
+    const modalContent = document.getElementById('testModalContent');
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <div class="mb-6">
+                    <i class="fas fa-tools text-4xl text-yellow-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Coming Soon!</h3>
+                    <p class="text-gray-600">This test is currently under development. Check back soon!</p>
+                </div>
+                <button onclick="closeTestModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    Close
+                </button>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Test In Development</h3>
-            <p class="text-gray-600 mb-6">This test is currently under development and will be available soon.</p>
-            <button id="closeInDevTest" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300">
-                Return to Tests
-            </button>
-        </div>
-    `;
-    
-    if (testContent) testContent.innerHTML = content;
-    
-    // Add event listener for the close button
-    setTimeout(() => {
-        const closeBtn = document.getElementById('closeInDevTest');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                closeTestModal();
-            });
-        }
-    }, 100);
+        `;
+    }
 }
 
 function setupVisualAcuityTest() {
-    const testContent = document.getElementById('testContent');
-    if (!testContent) return;
+    const modalContent = document.getElementById('testModalContent');
+    if (!modalContent) return;
     
-    testContent.innerHTML = `
-        <div class="text-center" id="loading">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-            <p class="mt-4 text-gray-600">Loading test...</p>
-        </div>
-        
-        <div id="visual-acuity-content" class="hidden">
-            <div id="testInstructions" class="mb-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Test Instructions</h3>
-                <p class="text-gray-700 mb-4">
-                    Cover one eye and read the letters from the top down. You'll have 20 seconds per line.
-                    Type the letters you see in the input box (no spaces needed) and click Submit or press Enter.
-                </p>
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-blue-800"><strong>Current Eye:</strong> <span id="currentEye">Right</span></p>
-                    <p class="text-blue-800"><strong>Time Remaining:</strong> <span id="timeRemaining">20</span> seconds</p>
+    modalContent.innerHTML = `
+        <div class="text-center py-6">
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Visual Acuity Test</h3>
+                <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-gray-600 mb-2">Instructions:</p>
+                    <ul class="text-sm text-gray-600 text-left space-y-1">
+                        <li>• Sit 10 feet (3 meters) from your screen</li>
+                        <li>• Cover one eye at a time</li>
+                        <li>• Read the letters from largest to smallest</li>
+                        <li>• Type what you see in the input field</li>
+                    </ul>
                 </div>
-            </div>
-            
-            <div class="flex justify-center mb-8">
-                <div class="snellen-chart bg-white p-8 rounded-lg shadow-md">
-                    <div id="snellenRows"></div>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <button onclick="startEyeTest()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        Start Test
+                    </button>
+                    <button onclick="closeTestModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-300">
+                        Cancel
+                    </button>
                 </div>
-            </div>
-            
-            <div id="currentRowInput" class="mb-6 hidden">
-                <label for="userInput" class="block text-gray-700 mb-2">Type the letters you see:</label>
-                <input type="text" id="userInput" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase" maxlength="10">
-                <button id="submitRow" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                    Submit
-                </button>
-            </div>
-            
-            <div class="flex justify-between">
-                <button id="cancelTest" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition duration-300">
-                    Cancel Test
-                </button>
-                <button id="nextEye" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 hidden">
-                    Test Left Eye
-                </button>
-            </div>
-        </div>
-        
-        <div id="testResults" class="hidden">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-check text-green-600 text-3xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Test Completed!</h3>
-                <p class="text-gray-600" id="resultsMessage">Your visual acuity results have been recorded.</p>
-            </div>
-            
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-                <h4 class="font-bold text-gray-800 mb-3">Your Results:</h4>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Visual Acuity:</span>
-                        <span class="font-medium" id="acuityResult">20/20</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Right Eye Score:</span>
-                        <span class="font-medium" id="rightEyeResult">0/6</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Left Eye Score:</span>
-                        <span class="font-medium" id="leftEyeResult">0/6</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Overall Score:</span>
-                        <span class="font-medium" id="overallScoreResult">0/6</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Test Date:</span>
-                        <span class="font-medium" id="testDateResult">Today</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-blue-50 p-6 rounded-lg mb-6">
-                <h4 class="font-bold text-gray-800 mb-3">Recommendations:</h4>
-                <p class="text-gray-700" id="testRecommendation">
-                    Your vision appears to be in the normal range. Consider repeating this test every 3-6 months to monitor any changes.
-                </p>
-            </div>
-            
-            <div class="flex justify-between">
-                <button id="viewDashboard" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition duration-300">
-                    View Dashboard
-                </button>
-                <button id="shareResults" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300">
-                    Share Results
-                </button>
             </div>
         </div>
     `;
-    
-    // Set up event listeners for visual acuity test after a short delay
-    setTimeout(() => {
-        const submitRowBtn = document.getElementById('submitRow');
-        if (submitRowBtn) {
-            submitRowBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                processRowSubmission();
-            });
-        }
-        
-        const nextEyeBtn = document.getElementById('nextEye');
-        if (nextEyeBtn) {
-            nextEyeBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                startEyeTest();
-            });
-        }
-        
-        const cancelTestBtn = document.getElementById('cancelTest');
-        if (cancelTestBtn) {
-            cancelTestBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeTestModal();
-            });
-        }
-        
-        const userInputField = document.getElementById('userInput');
-        if (userInputField) {
-            userInputField.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    processRowSubmission();
-                }
-            });
-        }
-
-        // View Dashboard button
-        const viewDashboardBtn = document.getElementById('viewDashboard');
-        if (viewDashboardBtn) {
-            viewDashboardBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeTestModal();
-                const dashboardSection = document.getElementById('dashboard');
-                if (dashboardSection) {
-                    dashboardSection.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        }
-
-        // Share Results button
-        const shareResultsBtn = document.getElementById('shareResults');
-        if (shareResultsBtn) {
-            shareResultsBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Results sharing feature will be implemented soon!');
-            });
-        }
-    }, 100);
 }
 
 function closeTestModal() {
-    const testModal = document.getElementById('testModal');
-    if (testModal) testModal.classList.add('hidden');
-    
-    document.body.style.overflow = 'auto';
+    const modal = document.getElementById('testModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
     resetTest();
 }
 
 function resetTest() {
-    currentTest = null;
+    testResults = {
+        right: { smallestLine: 0, correctAnswers: [] },
+        left: { smallestLine: 0, correctAnswers: [] }
+    };
+    currentRow = 0;
+    currentEye = 'right';
     clearInterval(testTimer);
 }
 
-// Visual acuity test functions
 function startEyeTest() {
-    const snellenContainer = document.getElementById('snellenRows');
-    if (!snellenContainer) return;
+    const modalContent = document.getElementById('testModalContent');
+    if (!modalContent) return;
     
-    snellenContainer.innerHTML = '';
+    // Generate random Snellen chart
+    currentSnellenRows = generateRandomSnellenChart();
     
-    currentSnellenRows.forEach((row, index) => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = `snellen-row-${index+1} mb-4 ${index > 0 ? 'hidden' : ''}`;
-        rowDiv.id = `row-${index}`;
-        rowDiv.style.fontSize = `${row.size}px`;
-        rowDiv.style.fontFamily = 'monospace';
-        rowDiv.style.letterSpacing = '0.2em';
-        rowDiv.textContent = row.letters;
-        snellenContainer.appendChild(rowDiv);
-    });
+    modalContent.innerHTML = `
+        <div class="text-center py-4">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Testing ${currentEye === 'right' ? 'Right' : 'Left'} Eye</h3>
+                <p class="text-sm text-gray-600">Row ${currentRow + 1} of ${currentSnellenRows.length}</p>
+            </div>
+            
+            <div class="snellen-chart mb-6">
+                <div style="font-size: ${currentSnellenRows[currentRow].size}px; font-weight: bold; color: black; margin: 10px 0;">
+                    ${currentSnellenRows[currentRow].letters}
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <input type="text" id="userInput" placeholder="Type what you see..." 
+                       class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       style="letter-spacing: 0.5em; text-align: center;">
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="submitRow" onclick="processRowSubmission()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    Submit
+                </button>
+                <button onclick="closeTestModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
     
-    currentRow = 0;
+    // Focus on input and add enter key listener
+    const userInput = document.getElementById('userInput');
+    if (userInput) {
+        userInput.focus();
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                processRowSubmission();
+            }
+        });
+    }
+    
     showCurrentRow();
 }
 
 function showCurrentRow() {
-    document.querySelectorAll('[id^="row-"]').forEach(row => {
-        row.classList.add('hidden');
-    });
-    
-    const currentRowElement = document.getElementById(`row-${currentRow}`);
-    const currentRowInput = document.getElementById('currentRowInput');
     const userInput = document.getElementById('userInput');
-    const timeRemainingElement = document.getElementById('timeRemaining');
-    
-    if (currentRowElement) currentRowElement.classList.remove('hidden');
-    if (currentRowInput) currentRowInput.classList.remove('hidden');
     if (userInput) {
         userInput.value = '';
         userInput.focus();
     }
-    
-    let timeLeft = 20;
-    if (timeRemainingElement) timeRemainingElement.textContent = timeLeft;
-    
-    clearInterval(testTimer);
-    testTimer = setInterval(() => {
-        timeLeft--;
-        if (timeRemainingElement) timeRemainingElement.textContent = timeLeft;
-        
-        if (timeLeft <= 0) {
-            clearInterval(testTimer);
-            processRowSubmission();
-        }
-    }, 1000);
 }
 
 function processRowSubmission() {
-    clearInterval(testTimer);
-    
     const userAnswer = document.getElementById('userInput').value.toUpperCase().replace(/\s/g, '');
     const correctAnswer = currentSnellenRows[currentRow].correct;
     
@@ -852,59 +630,40 @@ function processRowSubmission() {
 }
 
 function finishEyeTest() {
-    const correctRows = testResults[currentEye].correctAnswers
-        .filter(answer => answer.isCorrect)
-        .map(answer => answer.row);
-    
-    testResults[currentEye].smallestLine = correctRows.length > 0 ? 
-        Math.max(...correctRows) + 1 : 0;
-    
     if (currentEye === 'right') {
+        // Switch to left eye
         currentEye = 'left';
-        document.getElementById('currentEye').textContent = 'Left';
-        document.getElementById('nextEye').classList.remove('hidden');
-        document.getElementById('currentRowInput').classList.add('hidden');
+        currentRow = 0;
+        startEyeTest();
     } else {
+        // Both eyes completed
         completeVisualAcuityTest();
     }
 }
 
 function completeVisualAcuityTest() {
-    const rightScore = testResults.right.smallestLine;
-    const leftScore = testResults.left.smallestLine;
-    const overallScore = Math.max(rightScore, leftScore);
+    // Calculate scores for each eye
+    const rightScore = testResults.right.correctAnswers.filter(answer => answer.isCorrect).length;
+    const leftScore = testResults.left.correctAnswers.filter(answer => answer.isCorrect).length;
+    const overallScore = Math.round((rightScore + leftScore) / 2);
     
-    const acuityScores = {
-        '0': '20/200 or worse',
-        '1': '20/200',
-        '2': '20/100',
-        '3': '20/70',
-        '4': '20/50',
-        '5': '20/40',
-        '6': '20/30',
-        '7': '20/25',
-        '8': '20/20'
-    };
+    // Determine acuity result
+    let acuityResult = '';
+    if (overallScore >= 6) acuityResult = 'Excellent';
+    else if (overallScore >= 4) acuityResult = 'Good';
+    else if (overallScore >= 2) acuityResult = 'Fair';
+    else acuityResult = 'Poor';
     
-    const acuityResult = acuityScores[overallScore] || '20/200 or worse';
-    
-    document.getElementById('visual-acuity-content').classList.add('hidden');
-    document.getElementById('testResults').classList.remove('hidden');
-    
-    document.getElementById('acuityResult').textContent = acuityResult;
-    document.getElementById('rightEyeResult').textContent = `${rightScore}/6`;
-    document.getElementById('leftEyeResult').textContent = `${leftScore}/6`;
-    document.getElementById('overallScoreResult').textContent = `${overallScore}/6`;
-    document.getElementById('testDateResult').textContent = new Date().toLocaleDateString();
-    
+    // Generate recommendation
     let recommendation = '';
-    if (overallScore >= 5) {
-        recommendation = 'Excellent! Your vision appears to be in the normal range. Continue to monitor your eye health regularly.';
-    } else if (overallScore >= 3) {
-        recommendation = 'Your vision may be below average. Consider scheduling an appointment with an eye care professional for a comprehensive exam.';
+    if (overallScore >= 6) {
+        recommendation = 'Your vision appears to be excellent. Continue with regular eye care.';
+    } else if (overallScore >= 4) {
+        recommendation = 'Your vision is good. Consider a professional eye exam for a complete assessment.';
     } else {
-        recommendation = 'Your results suggest significant vision impairment. Please consult an eye care professional as soon as possible for proper diagnosis and treatment.';
+        recommendation = 'Your vision may need attention. Please consult an eye care professional.';
     }
+    
     document.getElementById('testRecommendation').textContent = recommendation;
     
     saveTestResults(currentTest, {
@@ -919,12 +678,14 @@ function completeVisualAcuityTest() {
     });
 }
 
-// Save test results to Firestore with improved gamification
+// Save test results to localStorage with improved gamification
 function saveTestResults(testType, results) {
+    console.log('Saving test results:', { testType, results });
+    
     const testRecord = {
         testType: testType,
         ...results,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: new Date()
     };
     
     const newTestHistory = userEyeData.testHistory ? [...userEyeData.testHistory, testRecord] : [testRecord];
@@ -985,39 +746,54 @@ function saveTestResults(testType, results) {
         newBadges.push('consistent_excellence');
     }
     
-    // Update Firestore
-    db.collection('eye').doc(currentUser.uid).set({
-        testHistory: newTestHistory,
-        badges: newBadges,
-        lastTest: firebase.firestore.FieldValue.serverTimestamp(),
-        streak: newStreak,
-        totalTests: newTotalTests,
-        bestScore: newBestScore
-    }, { merge: true })
-    .then(() => {
-        // Update local data with the new values
-        userEyeData.testHistory = newTestHistory;
-        userEyeData.badges = newBadges;
-        userEyeData.streak = newStreak;
-        userEyeData.totalTests = newTotalTests;
-        userEyeData.bestScore = newBestScore;
-        userEyeData.lastTest = new Date(); // Use current date for local update
-        
-        // Update dashboard
-        updateDashboard();
-        
-        // Show achievement notification if new badges were earned
-        const previousBadgeCount = userEyeData.badges ? userEyeData.badges.length : 0;
-        const newBadgesEarned = newBadges.length - previousBadgeCount;
-        if (newBadgesEarned > 0) {
-            showAchievementNotification(newBadgesEarned);
-        }
-    })
-    .catch(error => {
-        console.error("Error saving test results:", error);
-        // Show error notification to user
-        alert("Error saving test results. Please try again.");
-    });
+    // Update local data
+    userEyeData.testHistory = newTestHistory;
+    userEyeData.badges = newBadges;
+    userEyeData.streak = newStreak;
+    userEyeData.totalTests = newTotalTests;
+    userEyeData.bestScore = newBestScore;
+    userEyeData.lastTest = new Date();
+    
+    // Save to localStorage
+    saveEyeDataToStorage();
+    
+    // Update dashboard
+    updateDashboard();
+    
+    // Show achievement notification if new badges were earned
+    const previousBadgeCount = userEyeData.badges ? userEyeData.badges.length : 0;
+    const newBadgesEarned = newBadges.length - previousBadgeCount;
+    if (newBadgesEarned > 0) {
+        showAchievementNotification(newBadgesEarned);
+    }
+    
+    // Close modal and show results
+    closeTestModal();
+    
+    // Show results notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 left-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-3 text-xl"></i>
+            <div>
+                <h4 class="font-bold">Test Completed!</h4>
+                <p>Score: ${results.overallScore}/8 (${results.result})</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
 }
 
 // Show achievement notification
